@@ -1,72 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="#111827"
     android:gravity="center"
-    android:padding="24dp"
-    android:background="#0F172A">
+    android:orientation="vertical"
+    android:padding="24dp">
 
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="PICU Calculator Pro"
-        android:textColor="#10B981"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
+    <!-- أيقونة التطبيق -->
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/ic_launcher"
+        android:contentDescription="Ahmad Qudah" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Device ID:"
-        android:textColor="#94A3B8"
-        android:textSize="14sp"
-        android:layout_marginTop="16dp"/>
-
-    <TextView
-        android:id="@+id/tvDeviceId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Loading..."
-        android:textColor="#FBBF24"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp"/>
-
-    <EditText
-        android:id="@+id/etActivationKey"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter Activation Key"
+        android:text="Ahmad Qudah"
         android:textColor="#FFFFFF"
-        android:textColorHint="#64748B"
-        android:background="@drawable/edit_text_border"
-        android:padding="16dp"
-        android:inputType="text"
-        android:textAlignment="center"
-        android:textSize="16sp"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btnActivate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Activate"
-        android:textColor="#000000"
-        android:backgroundTint="#10B981"
-        android:padding="16dp"
-        android:textSize="16sp"
+        android:textSize="22sp"
         android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginTop="12dp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Contact: +962782088812"
-        android:textColor="#64748B"
-        android:textSize="12sp"
-        android:layout_marginTop="16dp"/>
+        android:text="Medications calculations"
+        android:textColor="#9CA3AF"
+        android:textSize="14sp"
+        android:layout_marginBottom="32dp" />
+
+    <!-- بطاقة التفعيل -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp"
+        android:backgroundTint="#1F2937">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Device ID -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Device ID"
+                android:textColor="#D1D5DB"
+                android:textSize="12sp"
+                android:letterSpacing="0.1" />
+
+            <TextView
+                android:id="@+id/device_id_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="جاري التحميل..."
+                android:textColor="#F9FAFB"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:background="#111827"
+                android:padding="12dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="20dp" />
+
+            <!-- مربع الإدخال -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Activation Code"
+                android:textColor="#D1D5DB"
+                android:textSize="12sp"
+                android:letterSpacing="0.1" />
+
+            <EditText
+                android:id="@+id/activation_code_input"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/edit_text_border"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#6B7280"
+                android:hint="أدخل كود التفعيل"
+                android:inputType="text"
+                android:textSize="16sp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="20dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp" />
+
+            <!-- زر التحقق -->
+            <Button
+                android:id="@+id/verify_button"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:text="تحقق"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:backgroundTint="#0D9488"
+                android:layout_marginBottom="16dp" />
+
+            <!-- خط فاصل -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#374151"
+                android:layout_marginVertical="8dp" />
+
+            <!-- مفتاح الطوارئ (صغير، مخفي جزئياً) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="مفتاح الطوارئ"
+                android:textColor="#9CA3AF"
+                android:textSize="11sp"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/master_key_input"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@drawable/edit_text_border"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#6B7280"
+                android:hint="AHMAD_MASTER_2026"
+                android:inputType="textPassword"
+                android:textSize="14sp"
+                android:layout_marginBottom="12dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp" />
+
+            <Button
+                android:id="@+id/master_key_button"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:text="تفعيل بالمفتاح العام"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:backgroundTint="#4F46E5"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- زر واتساب -->
+    <LinearLayout
+        android:id="@+id/whatsapp_button"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="#25D366"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_marginTop="20dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:elevation="4dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💬"
+            android:textSize="20sp"
+            android:layout_marginRight="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="تواصل واتساب للتفعيل"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 </LinearLayout>
