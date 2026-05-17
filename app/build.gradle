@@ -7,6 +7,14 @@ android {
     namespace 'com.a7mad.picupro'
     compileSdk 34
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+
     defaultConfig {
         applicationId "com.a7mad.picupro"
         minSdk 24
