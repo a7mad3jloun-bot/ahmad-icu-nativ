@@ -1,62 +1,176 @@
 package com.a7mad.picupro
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
+import android.view.View
+import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import java.security.MessageDigest
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var imgAppIcon: ImageView
+    private lateinit var cardActivation: CardView
+    private lateinit var tvDeviceId: TextView
+    private lateinit var etActivationCode: EditText
+    private lateinit var btnVerify: Button
+    private lateinit var btnWhatsapp: Button
+    private lateinit var tvEmail: TextView
+
+    // مفتاح الطوارئ - مقسم إلى 3 أجزاء (لا يظهر كاملاً في الكود)
+    private val masterKeyPart1 = "AHMAD_MA"
+    private val masterKeyPart2 = "STER_20"
+    private val masterKeyPart3 = "26"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_activation)
 
-        val prefs = getSharedPreferences("Secure_Data", MODE_PRIVATE)
-        val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "000"
-        val activationCode = generateFinalHash(androidId)
+        initViews()
+        setupAnimations()
+        generateDeviceId()
+        setupClickListeners()
+    }
 
-        if (prefs.getBoolean("activated", false)) {
-            showCalculator()
-        } else {
-            showActivationScreen(androidId, activationCode, prefs)
+    private fun initViews() {
+        imgAppIcon = findViewById(R.id.img_app_icon)
+        cardActivation = findViewById(R.id.card_activation)
+        tvDeviceId = findViewById(R.id.device_id_text)
+        etActivationCode = findViewById(R.id.activation_code_input)
+        btnVerify = findViewById(R.id.verify_button)
+        btnWhatsapp = findViewById(R.id.whatsapp_button)
+        tvEmail = findViewById(R.id.tv_email)
+    }
+
+    private fun setupAnimations() {
+        val pulseAnim = AnimationUtils.loadAnimation(this, R.anim.anim_pulse)
+        imgAppIcon.startAnimation(pulseAnim)
+
+        val fadeIn = AnimationUtils.loadAnimation(this, R.anim.anim_fade_in_up)
+        cardActivation.startAnimation(fadeIn)
+
+        val childFadeIn = AnimationUtils.loadAnimation(this, R.anim.anim_fade_in_child)
+        val viewsToAnimate = listOf(
+            findViewById<TextView>(R.id.tv_app_name),
+            findViewById<TextView>(R.id.tv_subtitle),
+            tvDeviceId,
+            etActivationCode,
+            btnVerify,
+            btnWhatsapp
+        )
+
+        viewsToAnimate.forEachIndexed { index, view ->
+            view.visibility = View.INVISIBLE
+            Handler(Looper.getMainLooper()).postDelayed({
+                view.visibility = View.VISIBLE
+                view.startAnimation(childFadeIn)
+            }, 400 + (index * 120).toLong())
         }
     }
 
-    private fun showActivationScreen(id: String, correct: String, prefs: android.content.SharedPreferences) {
-        setContentView(R.layout.activity_activation)
+    private fun generateDeviceId() {
+        val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+            ?: "UNKNOWN_DEVICE"
+        val formatted = androidId.take(16).uppercase().chunked(4).joinToString("-")
+        tvDeviceId.text = formatted
+    }
 
-        val tvDeviceId = findViewById<TextView>(R.id.tvDeviceId)
-        val etActivationKey = findViewById<EditText>(R.id.etActivationKey)
-        val btnActivate = findViewById<Button>(R.id.btnActivate)
+    private fun setupClickListeners() {
+        // الضغط المطول على الأيقونة لإظهار حوار الطوارئ
+        imgAppIcon.setOnLongClickListener {
+            showMasterKeyDialog()
+            true
+        }
 
-        tvDeviceId.text = id
+        // زر التحقق
+        btnVerify.setOnClickListener {
+            val enteredCode = etActivationCode.text.toString().trim()
+            if (enteredCode.isEmpty()) {
+                etActivationCode.error = "Please enter activation code"
+                return@setOnClickListener
+            }
+            verifyActivationCode(enteredCode)
+        }
 
-        btnActivate.setOnClickListener {
-            val inputKey = etActivationKey.text.toString().trim()
-            if (inputKey == correct || inputKey == "AHMAD_MASTER_2026") {
-                prefs.edit().putBoolean("activated", true).apply()
-                Toast.makeText(this, "Activation successful!", Toast.LENGTH_LONG).show()
-                showCalculator()
+        // زر واتساب
+        btnWhatsapp.setOnClickListener {
+            val phoneNumber = "+962782088812"
+            val message = "Hello Dr. Ahmad Qudah,\n\nI need an activation code for my device.\nDevice ID: ${tvDeviceId.text}\n\nThank you."
+            val uri = Uri.parse("https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encode(message)}")
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivity(intent)
             } else {
-                Toast.makeText(this, "Invalid activation key", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "WhatsApp not installed", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        // الضغط على البريد الإلكتروني
+        tvEmail.setOnClickListener {
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("mailto:a7mad3jloun@yahoo.com")
+                putExtra(Intent.EXTRA_SUBJECT, "Ahmad Qudah App - Activation Request")
+                putExtra(Intent.EXTRA_TEXT, "Device ID: ${tvDeviceId.text}\n\nPlease send activation code.")
+            }
+            startActivity(intent)
+        }
+    }
+
+    private fun verifyActivationCode(enteredCode: String) {
+        val deviceId = tvDeviceId.text.toString().replace("-", "").trim()
+        val secret = deviceId + "PICU2026AhmedQudah"
+        val expectedHash = sha256(secret).take(14).uppercase()
+
+        if (enteredCode.replace("-", "").uppercase().trim() == expectedHash) {
+            Toast.makeText(this, "تم التفعيل بنجاح", Toast.LENGTH_LONG).show()
+            // هنا سننتقل للشاشة الرئيسية لاحقاً
+        } else {
+            // تجربة المفتاح العام للطوارئ (المقطع)
+            val masterKey = masterKeyPart1 + masterKeyPart2 + masterKeyPart3
+            if (enteredCode.trim() == masterKey) {
+                Toast.makeText(this, "تم التفعيل بالمفتاح العام", Toast.LENGTH_LONG).show()
+                // هنا سننتقل للشاشة الرئيسية لاحقاً
+            } else {
+                etActivationCode.error = "Invalid activation code"
+                Toast.makeText(this, "كود التفعيل غير صحيح", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun showCalculator() {
-        setContentView(R.layout.activity_main)
+    private fun showMasterKeyDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.activity_main, null)
+        val input = dialogView?.findViewById<EditText>(android.R.id.edit)
+
+        AlertDialog.Builder(this)
+            .setTitle("Emergency Access")
+            .setMessage("Enter master key:")
+            .setView(dialogView)
+            .setPositiveButton("OK") { _, _ ->
+                val masterKey = input?.text?.toString() ?: ""
+                val fullMasterKey = masterKeyPart1 + masterKeyPart2 + masterKeyPart3
+                if (masterKey == fullMasterKey) {
+                    Toast.makeText(this, "تم التفعيل بالمفتاح العام", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "مفتاح غير صحيح", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
-    private fun generateFinalHash(id: String): String {
-        val salt = "PICU" + "2026" + "Ahmed" + "Qudah"
-        val raw = id + salt
-        val digest = MessageDigest.getInstance("SHA-256")
-        val result = digest.digest(raw.toByteArray())
-        return result.joinToString("") { "%02x".format(it) }.take(14).uppercase()
+    private fun sha256(input: String): String {
+        val bytes = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
+        return bytes.joinToString("") { "%02x".format(it) }
     }
 }

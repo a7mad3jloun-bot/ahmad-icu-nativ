@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ahmad Qudah</string>
+    <string name="app_subtitle">Medications Calculations</string>
+    <string name="device_id_label">Device ID</string>
+    <string name="activation_code_hint">Enter Activation Code</string>
+    <string name="verify_button">Verify</string>
+    <string name="whatsapp_contact">Contact via WhatsApp</string>
+    <string name="developer_name">Developed by Ahmad Qudah</string>
+    <string name="developer_email">a7mad3jloun@yahoo.com</string>
+    <string name="dedication">This application is dedicated to cardiac intensive care units for post-operative congenital heart disease in children.</string>
+    <string name="version">v1.0</string>
+    <string name="developer_signature">Ahmad Qudah © 2026</string>
+    <string name="activation_help">Please contact the developer via WhatsApp to receive your activation code.</string>
+</resources>

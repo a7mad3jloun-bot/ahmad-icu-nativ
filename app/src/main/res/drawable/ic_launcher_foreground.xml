@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    
+    <!-- الخلفية السوداء للدرع -->
+    <path android:pathData="M0,0h1024v1024h-1024z" android:fillColor="#111827"/>
+    
+    <!-- الدرع المتدرج (نفس تدرج Meta) -->
+    <path android:pathData="M196,16H828A180,180 0,0 1,1008 196V600C1008,860 792,1008 512,1008C232,1008 16,860 16,600V196A180,180 0,0 1,196 16Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startY="0" android:endY="1024"
+                android:startColor="#0D9488" android:endColor="#4F46E5"/>
+        </aapt:attr>
+    </path>
+    
+    <!-- اللمعة الزجاجية فوق الدرع -->
+    <path android:pathData="M196,16H828A180,180 0,0 1,1008 196V600C1008,860 792,1008 512,1008C232,1008 16,860 16,600V196A180,180 0,0 1,196 16Z"
+        android:fillColor="#0DFFFFFF"/>
+    
+    <!-- خط نبض القلب (ECG) بدلاً من الصليب -->
+    <path android:pathData="M280,480 L370,480 L420,330 L480,630 L530,480 L744,480"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="32"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+</vector>

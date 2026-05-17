@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_teal">#0D9488</color>
+    <color name="primary_teal_light">#14B8A6</color>
+    <color name="primary_teal_dark">#0F766E</color>
+    <color name="secondary_indigo">#4F46E5</color>
+    <color name="secondary_indigo_light">#6366F1</color>
+    <color name="secondary_indigo_dark">#4338CA</color>
+    
+    <color name="bg_dark_start">#0F172A</color>
+    <color name="bg_dark_end">#1E293B</color>
+    <color name="bg_card">#1E293B</color>
+    <color name="bg_surface">#334155</color>
+    
+    <color name="glass_white">#18FFFFFF</color>
+    <color name="glass_white_strong">#28FFFFFF</color>
+    <color name="glass_border">#30FFFFFF</color>
+    <color name="glass_glow_teal">#200D9488</color>
+    <color name="glass_glow_indigo">#204F46E5</color>
+    
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_muted">#64748B</color>
+    <color name="text_accent">#14B8A6</color>
+    
+    <color name="whatsapp_green">#25D366</color>
+    <color name="whatsapp_green_dark">#128C7E</color>
+    <color name="divider">#1EFFFFFF</color>
+</resources>
