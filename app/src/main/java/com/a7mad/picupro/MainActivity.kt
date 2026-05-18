@@ -10,6 +10,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -86,7 +87,7 @@ fun ActivationScreen() {
                 .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // الأيقونة البرمجية المتوهجة (قلب ينبض بالطب والحياة)
+            // الأيقونة البرمجية المتوهجة
             Box(
                 modifier = Modifier
                     .size(85.dp)
@@ -177,7 +178,7 @@ fun ActivationScreen() {
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // زر التفعيل المتوهج (بألوان Gradient)
+            // زر التفعيل المتوهج
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -198,7 +199,7 @@ fun ActivationScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // زر الواتساب (شفاف مع حدود زرقاء ساطعة)
+            // زر الواتساب (تم تصحيح BorderStroke هنا)
             OutlinedButton(
                 onClick = {
                     val phoneNumber = "+962782088812"
@@ -217,7 +218,7 @@ fun ActivationScreen() {
                     .fillMaxWidth()
                     .height(55.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = electricBlue),
-                border = border(1.5.dp, electricBlue, RoundedCornerShape(16.dp)),
+                border = BorderStroke(1.5.dp, electricBlue),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text("Get Code via WhatsApp", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
@@ -226,7 +227,6 @@ fun ActivationScreen() {
     }
 }
 
-// دالة التحقق من الكود باستخدام SHA-256 وأول 14 حرف
 fun verifyActivationCode(deviceId: String, inputCode: String): Boolean {
     if (inputCode.isBlank()) return false
     val rawString = deviceId + "PICU2026AhmedQudah"
