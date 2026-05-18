@@ -49,4 +49,7 @@ dependencies {
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.foundation:foundation'
     implementation 'androidx.compose.material:material-icons-extended'
+
+    // مكتبة Material Design القديمة (لتجنب أخطاء themes.xml)
+    implementation 'com.google.android.material:material:1.11.0'
 }
