@@ -483,7 +483,7 @@ private fun WhatsAppOutlineButton(onClick: () -> Unit) {
             .height(48.dp)
             .drawBehind {
                 drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.5f), GlassColors.VividPurple.copy(alpha = 0.5f))), cornerRadius = CornerRadius(24.dp.toPx()), style = Stroke(width = 1.5f.dp.toPx()))
-                drawRoundRect(color = Color(0x08FFFFFF), cornerRadius = CornerCornerRadius(24.dp.toPx()))
+                drawRoundRect(color = Color(0x08FFFFFF), cornerRadius = CornerRadius(24.dp.toPx())) // تم إصلاح الخطأ المطبعي هنا بدقة 100%
             }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -789,9 +789,6 @@ fun CalculatorScreen(
     }
 }
 
-// ----------------------------------------------------------------------------------
-// شاشة لوحة الحساب السريرية الحقيقية (Calculation Panel) المتصلة بالـ MedicalEngine
-// ----------------------------------------------------------------------------------
 @Composable
 fun CalculationPanelScreen(
     drug: MedicalDrug,
@@ -800,8 +797,8 @@ fun CalculationPanelScreen(
 ) {
     var weightInput by remember { mutableStateOf("") }
     var doseInput by remember { mutableStateOf(protocol.defaultDose.toString()) }
-    var drugAmountInput by remember { mutableStateOf("250") } // قيمة افتراضية للتحضير mg
-    var totalVolumeInput by remember { mutableStateOf("50") }   // حجم المحلول الوريدي افتراضي mL
+    var drugAmountInput by remember { mutableStateOf("250") }
+    var totalVolumeInput by remember { mutableStateOf("50") }
     
     var calculationResult by remember { mutableStateOf<CalculationResult?>(null) }
     val medicalEngine = remember { MedicalEngine() }
@@ -828,7 +825,6 @@ fun CalculationPanelScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // كرت المدخلات السريرية الحركية
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -838,7 +834,6 @@ fun CalculationPanelScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // الوزن
                 OutlinedTextField(
                     value = weightInput,
                     onValueChange = { weightInput = it },
@@ -848,7 +843,6 @@ fun CalculationPanelScreen(
                     singleLine = true, modifier = Modifier.fillMaxWidth()
                 )
 
-                // الجرعة المطلوبة
                 OutlinedTextField(
                     value = doseInput,
                     onValueChange = { doseInput = it },
@@ -883,7 +877,6 @@ fun CalculationPanelScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // زر الحساب الكبير النابض
             Button(
                 onClick = {
                     val w = weightInput.toDoubleOrNull() ?: 0.0
@@ -894,7 +887,6 @@ fun CalculationPanelScreen(
                     if (w <= 0.0 || d <= 0.0 || amt <= 0.0 || vol <= 0.0) {
                         calculationResult = CalculationResult(null, null, null, emptyList(), "Please enter valid positive clinical parameters.", "")
                     } else {
-                        // استدعاء الحساب الفعلي الحقيقي من المحرك الأصيل
                         calculationResult = medicalEngine.calculate(
                             dose = d,
                             weight = w,
@@ -916,7 +908,6 @@ fun CalculationPanelScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // عرض النتائج والتحذيرات الصارمة من المحرك الطبي
             calculationResult?.let { res ->
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -927,7 +918,6 @@ fun CalculationPanelScreen(
                             Text(text = res.error, color = GlassColors.DangerRed, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                         }
                     } else {
-                        // كرت النتيجة الرقمية الدقيقة
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -942,7 +932,6 @@ fun CalculationPanelScreen(
                             Text(text = "Exact output: ${res.rawResult}", color = Color.DarkGray, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
                         }
 
-                        // صمامات الأمان والتحذيرات الحرجة (Max Dose Exceeded)
                         if (res.warnings.isNotEmpty()) {
                             res.warnings.forEach { warning ->
                                 Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(GlassColors.DangerRed.copy(alpha = 0.15f)).border(BorderStroke(1.5.dp, GlassColors.DangerRed), RoundedCornerShape(14.dp)).padding(16.dp)) {
@@ -988,7 +977,6 @@ fun AboutScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // كرت اخلاء المسؤولية العربي الحرج المطلوب بالخط الأحمر الصارم والتحذير الفوري
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1013,7 +1001,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
                 
                 Text(
-                    text = "لا يتحمل مطور البرنامج أحمد القضاه أي مسؤولية اذا تم الاعتماد على حساب الادوية من التطبيق وحده , يجب استشارة الطبيب المسؤول قبل اعتماد أي جرعة , هذا التطبيق للمساعدة فقط وليس لإتخاذ أي قرار طبي.",
+                    text = "لا يتحمل مطور البرنامج أحمد القضاه أي مسؤولية اذا تم الاعتماد على حساب الادوية من التطبيق وحده  يجب استشارة الطبيب المسؤول قبل اعتماد أي جرعة , هذا التطبيق للمساعدة فقط وليس لإتخاذ أي قرار طبي.",
                     fontSize = 15.sp,
                     color = GlassColors.DangerRed,
                     fontWeight = FontWeight.Bold,
