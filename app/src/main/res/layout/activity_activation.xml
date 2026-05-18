@@ -71,7 +71,7 @@
             android:layout_marginTop="32dp"
             app:cardCornerRadius="28dp"
             app:cardElevation="12dp"
-            app:cardBackgroundColor="@drawable/bg_glass_card"
+            app:cardBackgroundColor="@android:color/transparent"
             app:layout_constraintTop_toBottomOf="@id/tv_subtitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -81,7 +81,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:gravity="center_horizontal"
-                android:padding="28dp">
+                android:padding="28dp"
+                android:background="@drawable/bg_glass_card">
 
                 <TextView
                     android:layout_width="wrap_content"
