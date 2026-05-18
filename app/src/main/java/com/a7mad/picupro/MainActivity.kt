@@ -10,14 +10,30 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,16 +44,33 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -59,7 +92,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-// الألوان المخصصة للتصميم الزجاجي النيوني
 object GlassColors {
     val MidnightBlue = Color(0xFF050A1F)
     val ElectricBlue = Color(0xFF00D4FF)
@@ -110,7 +142,6 @@ fun MainNavigationScreen() {
     }
 }
 
-// شاشة التفعيل المطورة بصرياً من كيمي والمربوطة برمجياً بنظامنا
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivationScreenVisual(onActivationSuccess: (String) -> Unit) {
@@ -238,33 +269,39 @@ fun ActivationScreenVisual(onActivationSuccess: (String) -> Unit) {
 private fun NeonBackground(glowPhase: Float) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         drawRect(color = GlassColors.MidnightBlue)
-        val centerX = size.width / 2
-        val centerY = size.height / 3
+        val centerX = size.width / 2f
+        val centerY = size.height / 3f
+
+        val cos1 = cos(glowPhase.toDouble()).toFloat()
+        val sin1 = sin((glowPhase * 0.7f).toDouble()).toFloat()
 
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.15f), GlassColors.ElectricBlue.copy(alpha = 0.05f), Color.Transparent),
-                center = Offset(centerX + cos(glowPhase) * 50f, centerY + sin(glowPhase * 0.7f) * 30f),
+                center = Offset(centerX + cos1 * 50f, centerY + sin1 * 30f),
                 radius = size.width * 0.6f
             ),
             radius = size.width * 0.6f,
-            center = Offset(centerX + cos(glowPhase) * 50f, centerY + sin(glowPhase * 0.7f) * 30f)
+            center = Offset(centerX + cos1 * 50f, centerY + sin1 * 30f)
         )
+
+        val cos2 = cos((glowPhase * 0.8f).toDouble()).toFloat()
+        val sin2 = sin(glowPhase.toDouble()).toFloat()
 
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(GlassColors.VividPurple.copy(alpha = 0.12f), GlassColors.VividPurple.copy(alpha = 0.04f), Color.Transparent),
-                center = Offset(centerX - cos(glowPhase * 0.8f) * 60f, centerY + sin(glowPhase) * 40f + 200f),
+                center = Offset(centerX - cos2 * 60f, centerY + sin2 * 40f + 200f),
                 radius = size.width * 0.5f
             ),
             radius = size.width * 0.5f,
-            center = Offset(centerX - cos(glowPhase * 0.8f) * 60f, centerY + sin(glowPhase) * 40f + 200f)
+            center = Offset(centerX - cos2 * 60f, centerY + sin2 * 40f + 200f)
         )
 
         for (i in 0 until 60) {
             val x = (i * 137.5f) % size.width
             val y = (i * 71.3f) % size.height
-            val twinkle = sin(glowPhase * 2f + i) * 0.5f + 0.5f
+            val twinkle = sin((glowPhase * 2f + i).toDouble()).toFloat() * 0.5f + 0.5f
             drawCircle(color = GlassColors.GlassWhite.copy(alpha = 0.3f * twinkle), radius = 1.5f, center = Offset(x, y))
         }
     }
@@ -272,7 +309,7 @@ private fun NeonBackground(glowPhase: Float) {
 
 @Composable
 private fun GlowingMedicalIcon(scale: Float, glowPhase: Float) {
-    val glowIntensity = (sin(glowPhase) * 0.3f + 0.7f)
+    val glowIntensity = sin(glowPhase.toDouble()).toFloat() * 0.3f + 0.7f
     Box(
         modifier = Modifier
             .size(100.dp)
@@ -294,7 +331,7 @@ private fun GlowingMedicalIcon(scale: Float, glowPhase: Float) {
 
 @Composable
 private fun GlassCard(modifier: Modifier = Modifier, glowPhase: Float, content: @Composable () -> Unit) {
-    val borderGlow = (sin(glowPhase * 1.5f) * 0.3f + 0.7f)
+    val borderGlow = sin((glowPhase * 1.5f).toDouble()).toFloat() * 0.3f + 0.7f
     Box(
         modifier = modifier
             .graphicsLayer { rotationX = 2f; rotationY = 0f; cameraDistance = 12f; shadowElevation = 25f }
@@ -306,7 +343,7 @@ private fun GlassCard(modifier: Modifier = Modifier, glowPhase: Float, content: 
                     brush = Brush.verticalGradient(
                         colors = listOf(Color(0x20FFFFFF), Color(0x10FFFFFF), Color(0x08FFFFFF), Color(0x15FFFFFF))
                     ),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()),
+                    cornerRadius = CornerRadius(24.dp.toPx()),
                     size = Size(width, height)
                 )
 
@@ -318,8 +355,8 @@ private fun GlassCard(modifier: Modifier = Modifier, glowPhase: Float, content: 
                     size = Size(width * 0.6f, height * 0.5f)
                 )
 
-                drawRoundRect(color = GlassColors.ElectricBlue.copy(alpha = 0.6f * borderGlow), cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()), size = Size(width, height), style = Stroke(width = 1.5.dp.toPx()))
-                drawRoundRect(color = GlassColors.VividPurple.copy(alpha = 0.3f * borderGlow), cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()), size = Size(width - 4.dp.toPx(), height - 4.dp.toPx()), topLeft = Offset(2.dp.toPx(), 2.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
+                drawRoundRect(color = GlassColors.ElectricBlue.copy(alpha = 0.6f * borderGlow), cornerRadius = CornerRadius(24.dp.toPx()), size = Size(width, height), style = Stroke(width = 1.5.dp.toPx()))
+                drawRoundRect(color = GlassColors.VividPurple.copy(alpha = 0.3f * borderGlow), cornerRadius = CornerRadius(24.dp.toPx()), size = Size(width - 4.dp.toPx(), height - 4.dp.toPx()), topLeft = Offset(2.dp.toPx(), 2.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
             }
     ) { content() }
 }
@@ -332,8 +369,8 @@ private fun DeviceIdCapsule(deviceId: String, context: Context) {
             .fillMaxWidth()
             .height(48.dp)
             .drawBehind {
-                drawRoundRect(brush = Brush.horizontalGradient(listOf(Color(0x18FFFFFF), Color(0x10FFFFFF), Color(0x18FFFFFF))), cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()))
-                drawRoundRect(color = GlassColors.GlassBorder, cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
+                drawRoundRect(brush = Brush.horizontalGradient(listOf(Color(0x18FFFFFF), Color(0x10FFFFFF), Color(0x18FFFFFF))), cornerRadius = CornerRadius(24.dp.toPx()))
+                drawRoundRect(color = GlassColors.GlassBorder, cornerRadius = CornerRadius(24.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
             }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -343,7 +380,7 @@ private fun DeviceIdCapsule(deviceId: String, context: Context) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(text = deviceId, color = GlassColors.GlassWhite.copy(alpha = 0.9f), fontSize = 14.sp, fontWeight = FontWeight.Medium, fontFamily = FontFamily.Monospace)
             Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", tint = GlassColors.ElectricBlue, modifier = Modifier.size(18.dp).clickable {
-                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Device ID", deviceId))
+                clipboard.setPrimaryClip(ClipData.newPlainText("Device ID", deviceId))
                 Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
             })
         }
@@ -354,7 +391,7 @@ private fun DeviceIdCapsule(deviceId: String, context: Context) {
 @Composable
 private fun NeonTextField(value: String, onValueChange: (String) -> Unit, isFocused: Boolean, onFocusChange: (Boolean) -> Unit, glowPhase: Float) {
     val focusRequester = remember { FocusRequester() }
-    val neonIntensity = if (isFocused) (sin(glowPhase * 3f) * 0.3f + 0.7f) else 0.3f
+    val neonIntensity = if (isFocused) (sin((glowPhase * 3f).toDouble()).toFloat() * 0.3f + 0.7f) else 0.3f
 
     Box(
         modifier = Modifier
@@ -362,17 +399,17 @@ private fun NeonTextField(value: String, onValueChange: (String) -> Unit, isFocu
             .drawBehind {
                 val width = size.width
                 val height = size.height
-                drawRoundRect(color = Color(0x10FFFFFF), cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()))
+                drawRoundRect(color = Color(0x10FFFFFF), cornerRadius = CornerRadius(16.dp.toPx()))
 
                 if (isFocused) {
                     drawRoundRect(
                         brush = Brush.linearGradient(
                             colors = listOf(GlassColors.ElectricBlue.copy(alpha = neonIntensity), GlassColors.VividPurple.copy(alpha = neonIntensity), GlassColors.ElectricBlue.copy(alpha = neonIntensity))
                         ),
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()), style = Stroke(width = 2.dp.toPx())
+                        cornerRadius = CornerRadius(16.dp.toPx()), style = Stroke(width = 2.dp.toPx())
                     )
                 } else {
-                    drawRoundRect(color = GlassColors.GlassBorder, cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
+                    drawRoundRect(color = GlassColors.GlassBorder, cornerRadius = CornerRadius(16.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
                 }
             }
     ) {
@@ -389,7 +426,7 @@ private fun NeonTextField(value: String, onValueChange: (String) -> Unit, isFocu
 
 @Composable
 private fun GlowingGradientButton(text: String, onClick: () -> Unit, glowPhase: Float) {
-    val glowIntensity = (sin(glowPhase * 2f) * 0.2f + 0.8f)
+    val glowIntensity = sin((glowPhase * 2f).toDouble()).toFloat() * 0.2f + 0.8f
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -402,11 +439,11 @@ private fun GlowingGradientButton(text: String, onClick: () -> Unit, glowPhase: 
                     brush = Brush.radialGradient(
                         colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.3f * glowIntensity), GlassColors.VividPurple.copy(alpha = 0.2f * glowIntensity), Color.Transparent)
                     ),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(20.dp.toPx()),
+                    cornerRadius = CornerRadius(20.dp.toPx()),
                     size = Size(width + 20.dp.toPx(), height + 20.dp.toPx()), topLeft = Offset(-10.dp.toPx(), -10.dp.toPx())
                 )
 
-                drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.9f), GlassColors.VividPurple.copy(alpha = 0.9f), GlassColors.ElectricBlue.copy(alpha = 0.9f))), cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()))
+                drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.9f), GlassColors.VividPurple.copy(alpha = 0.9f), GlassColors.ElectricBlue.copy(alpha = 0.9f))), cornerRadius = CornerRadius(16.dp.toPx()))
                 drawRect(brush = Brush.verticalGradient(colors = listOf(Color(0x40FFFFFF), Color.Transparent), startY = 0f, endY = height * 0.5f), size = Size(width, height * 0.5f))
             }
             .clickable(onClick = onClick),
@@ -423,14 +460,14 @@ private fun WhatsAppOutlineButton(onClick: () -> Unit) {
             .fillMaxWidth()
             .height(48.dp)
             .drawBehind {
-                drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.5f), GlassColors.VividPurple.copy(alpha = 0.5f))), cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()), style = Stroke(width = 1.5f.dp.toPx()))
-                drawRoundRect(color = Color(0x08FFFFFF), cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()))
+                drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.5f), GlassColors.VividPurple.copy(alpha = 0.5f))), cornerRadius = CornerRadius(24.dp.toPx()), style = Stroke(width = 1.5f.dp.toPx()))
+                drawRoundRect(color = Color(0x08FFFFFF), cornerRadius = CornerRadius(24.dp.toPx()))
             }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(imageVector = Icons.Default.Info, contentDescription = "WhatsApp", tint = GlassColors.NeonCyan.copy(alpha = 0.9f), modifier = Modifier.size(20.dp))
+            Icon(imageVector = Icons.Default.Info, contentDescription = "Info", tint = GlassColors.NeonCyan.copy(alpha = 0.9f), modifier = Modifier.size(20.dp))
             Text(text = "Contact via WhatsApp", color = GlassColors.NeonCyan.copy(alpha = 0.9f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
     }
@@ -467,7 +504,6 @@ fun CalculatorScreen(onNavigateToAbout: () -> Unit) {
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
-    val textSilver = Color(0xFFE2E8F0)
     Box(modifier = Modifier.fillMaxSize().background(GlassColors.MidnightBlue).padding(20.dp)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(24.dp))
@@ -480,7 +516,7 @@ fun AboutScreen(onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(20.dp))
 
             Column(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Color.White.copy(alpha = 0.05f)).border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(24.dp)).padding(24.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Color.White.copy(alpha = 0.05f)).border(BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)), RoundedCornerShape(24.dp)).padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(text = "لا تنسوني ووالدي من صالح دعائكم", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = Color.White, textAlign = TextAlign.Center)
@@ -492,7 +528,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Color(0xFFEF4444).copy(alpha = 0.08f)).border(1.5.dp, Color(0xFFEF4444).copy(alpha = 0.4f), RoundedCornerShape(24.dp)).padding(24.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Color(0xFFEF4444).copy(alpha = 0.08f)).border(BorderStroke(1.5.dp, Color(0xFFEF4444).copy(alpha = 0.4f)), RoundedCornerShape(24.dp)).padding(24.dp)) {
                 Text(text = "MEDICAL DISCLAIMER", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(text = "This application is a medical calculation tool intended solely for educational and cognitive support for specialized healthcare professionals. It DOES NOT substitute professional medical advice, diagnosis, or treatment. You must obtain official medical approval and verify all doses from authorized clinical protocols before applying any information or calculations derived from this application in practice.", fontSize = 13.sp, color = Color(0xFFFCA5A5), textAlign = TextAlign.Justify, lineHeight = 18.sp)
