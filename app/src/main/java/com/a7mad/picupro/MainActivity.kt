@@ -49,6 +49,8 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -105,6 +107,8 @@ object GlassColors {
     val NeonCyan = Color(0xFF00F0FF)
     val GlassWhite = Color(0xFFFFFFFF)
     val GlassBorder = Color(0x33FFFFFF)
+    val DangerRed = Color(0xFFEF4444)
+    val WarningYellow = Color(0xFFEAB308)
 }
 
 class MainActivity : ComponentActivity() {
@@ -129,6 +133,8 @@ class MainActivity : ComponentActivity() {
 fun MainNavigationScreen() {
     var currentScreen by remember { mutableStateOf("activation") }
     var confirmedDeviceId by remember { mutableStateOf("") }
+    var selectedDrugForCalculation by remember { mutableStateOf<MedicalDrug?>(null) }
+    var selectedProtocolForCalculation by remember { mutableStateOf<DrugProtocol?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (currentScreen) {
@@ -139,7 +145,17 @@ fun MainNavigationScreen() {
                 }
             )
             "calculator" -> CalculatorScreen(
-                onNavigateToAbout = { currentScreen = "about" }
+                onNavigateToAbout = { currentScreen = "about" },
+                onNavigateToCalculate = { drug, protocol ->
+                    selectedDrugForCalculation = drug
+                    selectedProtocolForCalculation = protocol
+                    currentScreen = "calculation_panel"
+                }
+            )
+            "calculation_panel" -> CalculationPanelScreen(
+                drug = selectedDrugForCalculation!!,
+                protocol = selectedProtocolForCalculation!!,
+                onBack = { currentScreen = "calculator" }
             )
             "about" -> AboutScreen(
                 onBack = { currentScreen = "calculator" }
@@ -467,7 +483,7 @@ private fun WhatsAppOutlineButton(onClick: () -> Unit) {
             .height(48.dp)
             .drawBehind {
                 drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.5f), GlassColors.VividPurple.copy(alpha = 0.5f))), cornerRadius = CornerRadius(24.dp.toPx()), style = Stroke(width = 1.5f.dp.toPx()))
-                drawRoundRect(color = Color(0x08FFFFFF), cornerRadius = CornerRadius(24.dp.toPx()))
+                drawRoundRect(color = Color(0x08FFFFFF), cornerRadius = CornerCornerRadius(24.dp.toPx()))
             }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -481,7 +497,10 @@ private fun WhatsAppOutlineButton(onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CalculatorScreen(onNavigateToAbout: () -> Unit) {
+fun CalculatorScreen(
+    onNavigateToAbout: () -> Unit,
+    onNavigateToCalculate: (MedicalDrug, DrugProtocol) -> Unit
+) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedDrug by remember { mutableStateOf<MedicalDrug?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -689,13 +708,28 @@ fun CalculatorScreen(onNavigateToAbout: () -> Unit) {
                                 .border(BorderStroke(1.2.dp, sectionColor.copy(alpha = 0.6f)), RoundedCornerShape(18.dp))
                                 .padding(16.dp)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
                                     text = if (isNeonate) "🟣 Neonatal Protocol" else "🔵 Pediatric Protocol",
                                     color = if (isNeonate) Color(0xFFE879F9) else Color(0xFF38BDF8),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
                                 )
+                                
+                                Button(
+                                    onClick = {
+                                        showBottomSheet = false
+                                        onNavigateToCalculate(drug, protocol)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = sectionColor),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text("OPEN CALC", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
@@ -755,6 +789,179 @@ fun CalculatorScreen(onNavigateToAbout: () -> Unit) {
     }
 }
 
+// ----------------------------------------------------------------------------------
+// شاشة لوحة الحساب السريرية الحقيقية (Calculation Panel) المتصلة بالـ MedicalEngine
+// ----------------------------------------------------------------------------------
+@Composable
+fun CalculationPanelScreen(
+    drug: MedicalDrug,
+    protocol: DrugProtocol,
+    onBack: () -> Unit
+) {
+    var weightInput by remember { mutableStateOf("") }
+    var doseInput by remember { mutableStateOf(protocol.defaultDose.toString()) }
+    var drugAmountInput by remember { mutableStateOf("250") } // قيمة افتراضية للتحضير mg
+    var totalVolumeInput by remember { mutableStateOf("50") }   // حجم المحلول الوريدي افتراضي mL
+    
+    var calculationResult by remember { mutableStateOf<CalculationResult?>(null) }
+    val medicalEngine = remember { MedicalEngine() }
+
+    Box(modifier = Modifier.fillMaxSize().background(GlassColors.MidnightBlue).padding(16.dp)) {
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onBack() }.padding(4.dp)) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back", tint = GlassColors.ElectricBlue)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Back to List", color = GlassColors.ElectricBlue, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = drug.name, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+            Text(
+                text = if (protocol.category == AgeCategory.NEONATE) "🟣 NEONATAL CALCULATOR" else "🔵 PEDIATRIC CALCULATOR",
+                color = if (protocol.category == AgeCategory.NEONATE) Color(0xFFE879F9) else Color(0xFF38BDF8),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // كرت المدخلات السريرية الحركية
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White.copy(alpha = 0.04f))
+                    .border(BorderStroke(1.dp, GlassColors.GlassBorder), RoundedCornerShape(20.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // الوزن
+                OutlinedTextField(
+                    value = weightInput,
+                    onValueChange = { weightInput = it },
+                    label = { Text("Patient Weight (kg)", color = Color.Gray) },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GlassColors.ElectricBlue, unfocusedBorderColor = GlassColors.GlassBorder, focusedTextColor = Color.White, unfocusedTextColor = Color.White),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true, modifier = Modifier.fillMaxWidth()
+                )
+
+                // الجرعة المطلوبة
+                OutlinedTextField(
+                    value = doseInput,
+                    onValueChange = { doseInput = it },
+                    label = { Text("Desired Dose (${protocol.doseUnit})", color = Color.Gray) },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GlassColors.ElectricBlue, unfocusedBorderColor = GlassColors.GlassBorder, focusedTextColor = Color.White, unfocusedTextColor = Color.White),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true, modifier = Modifier.fillMaxWidth()
+                )
+
+                HorizontalDivider(color = GlassColors.GlassBorder)
+                Text("Preparation / Dilution Settings:", color = Color.Gray, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = drugAmountInput,
+                        onValueChange = { drugAmountInput = it },
+                        label = { Text("Total Drug (mg)", color = Color.Gray) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GlassColors.ElectricBlue, unfocusedBorderColor = GlassColors.GlassBorder, focusedTextColor = Color.White, unfocusedTextColor = Color.White),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true, modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = totalVolumeInput,
+                        onValueChange = { totalVolumeInput = it },
+                        label = { Text("Total Fluid (mL)", color = Color.Gray) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GlassColors.ElectricBlue, unfocusedBorderColor = GlassColors.GlassBorder, focusedTextColor = Color.White, unfocusedTextColor = Color.White),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true, modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // زر الحساب الكبير النابض
+            Button(
+                onClick = {
+                    val w = weightInput.toDoubleOrNull() ?: 0.0
+                    val d = doseInput.toDoubleOrNull() ?: 0.0
+                    val amt = drugAmountInput.toDoubleOrNull() ?: 0.0
+                    val vol = totalVolumeInput.toDoubleOrNull() ?: 0.0
+
+                    if (w <= 0.0 || d <= 0.0 || amt <= 0.0 || vol <= 0.0) {
+                        calculationResult = CalculationResult(null, null, null, emptyList(), "Please enter valid positive clinical parameters.", "")
+                    } else {
+                        // استدعاء الحساب الفعلي الحقيقي من المحرك الأصيل
+                        calculationResult = medicalEngine.calculate(
+                            dose = d,
+                            weight = w,
+                            unit = protocol.doseUnit,
+                            totalDrugAmount = amt,
+                            totalVolume = vol,
+                            totalDrugUnit = "mg",
+                            maxDose = protocol.maxDose,
+                            isContinuous = drug.isContinuous
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GlassColors.ElectricBlue),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("RUN CLINICAL CALCULATION", color = GlassColors.MidnightBlue, fontSize = 15.sp, fontWeight = FontWeight.Black)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // عرض النتائج والتحذيرات الصارمة من المحرك الطبي
+            calculationResult?.let { res ->
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    if (res.error != null) {
+                        Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(GlassColors.DangerRed.copy(alpha = 0.1f)).border(BorderStroke(1.2.dp, GlassColors.DangerRed), RoundedCornerShape(14.dp)).padding(16.dp)) {
+                            Text(text = res.error, color = GlassColors.DangerRed, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        // كرت النتيجة الرقمية الدقيقة
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color.White.copy(alpha = 0.06f))
+                                .border(BorderStroke(1.5.dp, GlassColors.NeonCyan), RoundedCornerShape(20.dp))
+                                .padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(text = res.displayMode, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = "${res.roundedResult} mL/hr", color = GlassColors.NeonCyan, fontSize = 38.sp, fontWeight = FontWeight.Black)
+                            Text(text = "Exact output: ${res.rawResult}", color = Color.DarkGray, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                        }
+
+                        // صمامات الأمان والتحذيرات الحرجة (Max Dose Exceeded)
+                        if (res.warnings.isNotEmpty()) {
+                            res.warnings.forEach { warning ->
+                                Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(GlassColors.DangerRed.copy(alpha = 0.15f)).border(BorderStroke(1.5.dp, GlassColors.DangerRed), RoundedCornerShape(14.dp)).padding(16.dp)) {
+                                    Text(text = warning, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+                                }
+                            }
+                        } else {
+                            Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFF10B981).copy(alpha = 0.1f)).border(BorderStroke(1.2.dp, Color(0xFF10B981)), RoundedCornerShape(14.dp)).padding(14.dp)) {
+                                Text(text = "✅ Dose is within secure therapeutic boundaries.", color = Color(0xFF34D399), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(40.dp))
+        }
+    }
+}
+
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize().background(GlassColors.MidnightBlue).padding(20.dp)) {
@@ -781,10 +988,39 @@ fun AboutScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Color(0xFFEF4444).copy(alpha = 0.08f)).border(BorderStroke(1.5.dp, Color(0xFFEF4444).copy(alpha = 0.4f)), RoundedCornerShape(24.dp)).padding(24.dp)) {
-                Text(text = "MEDICAL DISCLAIMER", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(text = "This application is a medical calculation tool intended solely for educational and cognitive support for specialized healthcare professionals. It DOES NOT substitute professional medical advice, diagnosis, or treatment. You must obtain official medical approval and verify all doses from authorized clinical protocols before applying any information or calculations derived from this application in practice.", fontSize = 13.sp, color = Color(0xFFFCA5A5), textAlign = TextAlign.Justify, lineHeight = 18.sp)
+            // كرت اخلاء المسؤولية العربي الحرج المطلوب بالخط الأحمر الصارم والتحذير الفوري
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(GlassColors.DangerRed.copy(alpha = 0.08f))
+                    .border(BorderStroke(2.dp, GlassColors.DangerRed), RoundedCornerShape(24.dp))
+                    .padding(24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Filled.Info, contentDescription = "Warning", tint = GlassColors.DangerRed, modifier = Modifier.size(28.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "تحذير طبي حرج",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        color = GlassColors.DangerRed
+                    )
+                }
+                
+                Text(
+                    text = "لا يتحمل مطور البرنامج أحمد القضاه أي مسؤولية اذا تم الاعتماد على حساب الادوية من التطبيق وحده , يجب استشارة الطبيب المسؤول قبل اعتماد أي جرعة , هذا التطبيق للمساعدة فقط وليس لإتخاذ أي قرار طبي.",
+                    fontSize = 15.sp,
+                    color = GlassColors.DangerRed,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Right,
+                    lineHeight = 24.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
