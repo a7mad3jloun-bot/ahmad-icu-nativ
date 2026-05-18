@@ -94,37 +94,12 @@ class MainActivity : AppCompatActivity() {
         // زر واتساب
         btnWhatsapp.setOnClickListener {
             val phoneNumber = "+962782088812"
-            val message = "Hello Ahmad Qudah,\n\nI need an activation code for my device.\nDevice ID: ${tvDeviceId.text}\n\nThank you."
-
-            // الطريقة 1: محاولة فتح تطبيق واتساب مباشرة
-            try {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse("https://wa.me/$phoneNumber?text=${Uri.encode(message)}")
-                    `package` = "com.whatsapp"
-                }
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                    return@setOnClickListener
-                }
-            } catch (e: Exception) {
-                // تجاهل الخطأ إن لم يعمل
+            val message = "Hello Dr. Ahmad Qudah,\n\nI need an activation code for my device.\nDevice ID: ${tvDeviceId.text}\n\nThank you."
+            val url = "https://wa.me/$phoneNumber?text=${Uri.encode(message)}"
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse(url)
             }
-
-            // الطريقة 2: فتح المتصفح على رابط واتساب
-            try {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse("https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encode(message)}")
-                }
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                    return@setOnClickListener
-                }
-            } catch (e: Exception) {
-                // تجاهل الخطأ
-            }
-
-            // الطريقة 3: رسالة احتياطية
-            Toast.makeText(this, "WhatsApp not available. Please contact: $phoneNumber", Toast.LENGTH_LONG).show()
+            startActivity(intent)
         }
 
         // الضغط على البريد الإلكتروني
@@ -145,7 +120,6 @@ class MainActivity : AppCompatActivity() {
 
         if (enteredCode.replace("-", "").uppercase().trim() == expectedHash) {
             Toast.makeText(this, "تم التفعيل بنجاح", Toast.LENGTH_LONG).show()
-            // هنا سننتقل للشاشة الرئيسية لاحقاً
         } else {
             etActivationCode.error = "Invalid activation code"
             Toast.makeText(this, "كود التفعيل غير صحيح", Toast.LENGTH_SHORT).show()

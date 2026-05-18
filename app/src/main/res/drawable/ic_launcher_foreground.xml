@@ -4,33 +4,51 @@
     android:height="108dp"
     android:viewportWidth="1024"
     android:viewportHeight="1024">
-
+    
     <!-- خلفية سوداء دائرية -->
     <path
         android:pathData="M0,0h1024v1024h-1024z"
-        android:fillColor="#111827"/>
-
-    <!-- درع بتدرج teal إلى indigo (نستخدم مسارين متداخلين) -->
-    <!-- الدرج الأساسي -->
+        android:fillColor="#0B1120"/>
+    
+    <!-- درع طبي شفاف -->
     <path
         android:pathData="M196,16H828A180,180 0,0 1,1008 196V600C1008,860 792,1008 512,1008C232,1008 16,860 16,600V196A180,180 0,0 1,196 16Z"
-        android:fillColor="#0D9488"/>
-
-    <!-- تدرج Indigo يغطي النصف السفلي لإيهام التدرج -->
+        android:fillColor="#00000000"
+        android:strokeColor="#20FFFFFF"
+        android:strokeWidth="12"/>
+    
+    <!-- تدرج الحروف A.Q -->
     <path
-        android:pathData="M16,700 L16,600C16,860 232,1008 512,1008C792,1008 1008,860 1008,600L1008,1024H16Z"
-        android:fillColor="#4F46E5"/>
-
-    <!-- لمسة زجاجية شفافة -->
+        android:pathData="M280,700 L370,320 L460,700 M310,560 L430,560 M520,320 L610,320 L610,700 M520,520 L610,520"
+        android:fillColor="#00000000"
+        android:strokeColor="#0D9488"
+        android:strokeWidth="48"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+    
+    <!-- تأثير زجاجي على الحروف -->
     <path
-        android:pathData="M196,16H828A180,180 0,0 1,1008 196V600C1008,860 792,1008 512,1008C232,1008 16,860 16,600V196A180,180 0,0 1,196 16Z"
-        android:fillColor="#10FFFFFF"/>
+        android:pathData="M280,700 L370,320 L460,700 M310,560 L430,560 M520,320 L610,320 L610,700 M520,520 L610,520"
+        android:fillColor="#00000000"
+        android:strokeColor="#30FFFFFF"
+        android:strokeWidth="40"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
 
-    <!-- خط ECG -->
+    <!-- خط ECG طبي -->
     <path
-        android:pathData="M280,480 L370,480 L420,330 L480,630 L530,480 L744,480"
+        android:pathData="M200,750 L320,750 L380,600 L440,850 L500,750 L824,750"
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFF"
+        android:strokeWidth="18"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+        
+    <!-- توهج التيل تحت ECG -->
+    <path
+        android:pathData="M200,750 L320,750 L380,600 L440,850 L500,750 L824,750"
+        android:fillColor="#00000000"
+        android:strokeColor="#300D9488"
         android:strokeWidth="32"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"/>

@@ -2,21 +2,10 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- خلفية سوداء دائرية -->
-    <path
-        android:fillColor="#111827"
-        android:pathData="M54,54m-54,0a54,54 0,1 1,108 0a54,54 0,1 1,-108 0"/>
-    <!-- أيقونة الدرع باللون الأزرق المخضر -->
-    <path
-        android:fillColor="#0D9488"
-        android:pathData="M54,20 L82,28 L82,52 C82,72 54,88 54,88 C54,88 26,72 26,52 L26,28 Z"/>
-    <!-- خط ECG أبيض -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:pathData="M22,70 L34,70 L38,62 L46,78 L50,70 L86,70"/>
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <path android:pathData="M0,0h1024v1024h-1024z" android:fillColor="#0B1120"/>
+    <path android:pathData="M196,16H828A180,180 0,0 1,1008 196V600C1008,860 792,1008 512,1008C232,1008 16,860 16,600V196A180,180 0,0 1,196 16Z" android:fillColor="#00000000" android:strokeColor="#20FFFFFF" android:strokeWidth="12"/>
+    <path android:pathData="M280,700 L370,320 L460,700 M310,560 L430,560 M520,320 L610,320 L610,700 M520,520 L610,520" android:fillColor="#00000000" android:strokeColor="#14B8A6" android:strokeWidth="48" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M200,750 L320,750 L380,600 L440,850 L500,750 L824,750" android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="18" android:strokeLineCap="round" android:strokeLineJoin="round"/>
 </vector>
