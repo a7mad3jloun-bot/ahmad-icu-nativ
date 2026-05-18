@@ -13,7 +13,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import java.security.MessageDigest
@@ -27,11 +26,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnVerify: Button
     private lateinit var btnWhatsapp: Button
     private lateinit var tvEmail: TextView
-
-    // مفتاح الطوارئ - مقسم إلى 3 أجزاء (لا يظهر كاملاً في الكود)
-    private val masterKeyPart1 = "AHMAD_MA"
-    private val masterKeyPart2 = "STER_20"
-    private val masterKeyPart3 = "26"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,12 +81,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        // الضغط المطول على الأيقونة لإظهار حوار الطوارئ
-        imgAppIcon.setOnLongClickListener {
-            showMasterKeyDialog()
-            true
-        }
-
         // زر التحقق
         btnVerify.setOnClickListener {
             val enteredCode = etActivationCode.text.toString().trim()
@@ -104,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // زر واتساب
-              btnWhatsapp.setOnClickListener {
+        btnWhatsapp.setOnClickListener {
             val phoneNumber = "+962782088812"
             val message = "Hello Ahmad Qudah,\n\nI need an activation code for my device.\nDevice ID: ${tvDeviceId.text}\n\nThank you."
 
@@ -138,7 +126,6 @@ class MainActivity : AppCompatActivity() {
             // الطريقة 3: رسالة احتياطية
             Toast.makeText(this, "WhatsApp not available. Please contact: $phoneNumber", Toast.LENGTH_LONG).show()
         }
-        }
 
         // الضغط على البريد الإلكتروني
         tvEmail.setOnClickListener {
@@ -160,37 +147,9 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "تم التفعيل بنجاح", Toast.LENGTH_LONG).show()
             // هنا سننتقل للشاشة الرئيسية لاحقاً
         } else {
-            // تجربة المفتاح العام للطوارئ (المقطع)
-            val masterKey = masterKeyPart1 + masterKeyPart2 + masterKeyPart3
-            if (enteredCode.trim() == masterKey) {
-                Toast.makeText(this, "تم التفعيل بالمفتاح العام", Toast.LENGTH_LONG).show()
-                // هنا سننتقل للشاشة الرئيسية لاحقاً
-            } else {
-                etActivationCode.error = "Invalid activation code"
-                Toast.makeText(this, "كود التفعيل غير صحيح", Toast.LENGTH_SHORT).show()
-            }
+            etActivationCode.error = "Invalid activation code"
+            Toast.makeText(this, "كود التفعيل غير صحيح", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun showMasterKeyDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.activity_main, null)
-        val input = dialogView?.findViewById<EditText>(android.R.id.edit)
-
-        AlertDialog.Builder(this)
-            .setTitle("Emergency Access")
-            .setMessage("Enter master key:")
-            .setView(dialogView)
-            .setPositiveButton("OK") { _, _ ->
-                val masterKey = input?.text?.toString() ?: ""
-                val fullMasterKey = masterKeyPart1 + masterKeyPart2 + masterKeyPart3
-                if (masterKey == fullMasterKey) {
-                    Toast.makeText(this, "تم التفعيل بالمفتاح العام", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(this, "مفتاح غير صحيح", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
     }
 
     private fun sha256(input: String): String {

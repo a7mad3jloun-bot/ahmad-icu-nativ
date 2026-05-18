@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Ahmad Qudah</string>
     <string name="app_subtitle">Medications Calculations</string>
+    <string name="activation_title">Activation Required</string>
     <string name="device_id_label">Device ID</string>
     <string name="activation_code_hint">Enter Activation Code</string>
     <string name="verify_button">Verify</string>
