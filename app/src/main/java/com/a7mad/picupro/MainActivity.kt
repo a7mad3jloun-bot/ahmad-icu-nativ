@@ -101,7 +101,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-// الفئات العمرية والوحدات المعتمدة سلفاً
 enum class AgeCategory { NEONATE, CHILD }
 
 data class DrugProtocol(
@@ -122,10 +121,8 @@ data class MedicalDrug(
 )
 
 data class ParsedUnit(val baseUnit: String, val hasKg: Boolean, val timeFactor: Int)
-data class ConcentrationResult(val value: Double, val unit: String)
 data class CalculationResult(val rawResult: Double?, val roundedResult: Double?, val calculatedDose: Double?, val warnings: List<String> = emptyList(), val error: String? = null, val displayMode: String = "")
 
-// محرك الحسابات الطبي الحقيقي المستخرج والمطابق للملف الـ HTML بنسبة 100%
 class MedicalEngine {
     fun parseUnitString(unitString: String?): ParsedUnit {
         var baseUnit = ""
@@ -216,14 +213,29 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainNavigationScreen() {
-    var currentScreen by remember { mutableStateOf("activation") }
+    val context = LocalContext.current
+    // إنشاء مستودع حفظ دائم على الهاتف لحفظ التفعيل
+    val prefs = remember { context.getSharedPreferences("picu_pro_storage", Context.MODE_PRIVATE) }
+    
+    // فحص ذكي عند التشغيل: إذا كان مفتاح التفعيل true يفتح الحاسبة مباشرة، وإلا يفتح شاشة التفعيل
+    var currentScreen by remember { 
+        mutableStateOf(if (prefs.getBoolean("is_activated", false)) "calculator" else "activation") 
+    }
+    
     var confirmedDeviceId by remember { mutableStateOf("") }
     var selectedDrugForCalculation by remember { mutableStateOf<MedicalDrug?>(null) }
     var selectedProtocolForCalculation by remember { mutableStateOf<DrugProtocol?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (currentScreen) {
-            "activation" -> ActivationScreenVisual(onActivationSuccess = { deviceId -> confirmedDeviceId = deviceId; currentScreen = "calculator" })
+            "activation" -> ActivationScreenVisual(
+                onActivationSuccess = { deviceId -> 
+                    // تخزين حالة التفعيل الدائم على الهاتف بنسبة 100%
+                    prefs.edit().putBoolean("is_activated", true).apply()
+                    confirmedDeviceId = deviceId
+                    currentScreen = "calculator" 
+                }
+            )
             "calculator" -> CalculatorScreen(onNavigateToAbout = { currentScreen = "about" }, onNavigateToCalculate = { drug, protocol -> selectedDrugForCalculation = drug; selectedProtocolForCalculation = protocol; currentScreen = "calculation_panel" })
             "calculation_panel" -> CalculationPanelScreen(drug = selectedDrugForCalculation!!, protocol = selectedProtocolForCalculation!!, onBack = { currentScreen = "calculator" })
             "about" -> AboutScreen(onBack = { currentScreen = "calculator" })
@@ -517,8 +529,10 @@ fun CalculationPanelScreen(drug: MedicalDrug, protocol: DrugProtocol, onBack: ()
                 HorizontalDivider(color = GlassColors.GlassBorder)
                 Text("Preparation Settings (طريقة التحضير):", color = Color.Gray, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(value = drugAmountInput, onValueChange = { drugAmountInput = it }, label = { Text("Total Drug (mg)", color = Color.Gray) }, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GlassColors.ElectricBlue, unfocusedBorderColor = GlassColors.GlassBorder, focusedTextColor = Color.White, unfocusedTextColor = Color.White), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.weight(1f))
-                    OutlinedTextField(value = totalVolumeInput, onValueChange = { totalVolumeInput = it }, label = { Text("Total Fluid (mL)", color = Color.Gray) }, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GlassColors.ElectricBlue, unfocusedBorderColor = GlassColors.GlassBorder, focusedTextColor = Color.White, unfocusedTextColor = Color.White), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.weight(1f))
+                    OutlinedTextField(value = drugAmountInput, onValueChange = { drugAmountInput = it }, label = { Text("Total Drug (mg)", color = Color.Gray) }, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GlassColors.ElectricBlue, unfocusedBorderColor = GlassColors.GlassBorder, focusedTextColor = Color.White, unfocusedTextColor = Color.White), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(value = totalVolumeInput, onValueChange = { totalVolumeInput = it }, label = { Text("Total Fluid (mL)", color = Color.Gray) }, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GlassColors.ElectricBlue, unfocusedBorderColor = GlassColors.GlassBorder, focusedTextColor = Color.White, unfocusedTextColor = Color.White), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.weight(1f)
+                    )
                 }
             }
 
@@ -575,7 +589,7 @@ fun CalculationPanelScreen(drug: MedicalDrug, protocol: DrugProtocol, onBack: ()
                     Spacer(modifier = Modifier.height(12.dp))
                     Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.06f)).border(BorderStroke(1.2.dp, GlassColors.VividPurple), RoundedCornerShape(16.dp)).padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "Current Patient Dose", color = Color.Gray, fontSize = 11.sp)
-                        Text(text = String.format(Locale.US, "%.3f %s", revDose, protocol.doseUnit), color = GlassColors.VividPurple, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                        Text(text = String.format(Locale.US, "%.4f %s", revDose, protocol.doseUnit), color = GlassColors.VividPurple, fontSize = 24.sp, fontWeight = FontWeight.Black)
                     }
                 }
             }
@@ -598,7 +612,7 @@ fun AboutScreen(onBack: () -> Unit) {
             Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Color.White.copy(alpha = 0.05f)).border(BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)), RoundedCornerShape(24.dp)).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "لا تنسوني ووالدي من صالح دعائكم", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = Color.White, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = "Ahmad Qudah", fontSize = 18.sp, color = GlassColors.VividPurple, fontWeight = FontWeight.Bold)
+                Text(text = "أخوكم أحمد القضاه", fontSize = 18.sp, color = GlassColors.VividPurple, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(text = "This application is dedicated to cardiac intensive care units for post-operative congenital heart disease in children.", fontSize = 14.sp, color = Color.LightGray, textAlign = TextAlign.Center, lineHeight = 20.sp)
             }
