@@ -20,15 +20,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.security.MessageDigest
@@ -38,11 +43,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    ActivationScreen()
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        ActivationScreen()
+                    }
                 }
             }
         }
@@ -55,39 +62,66 @@ fun ActivationScreen() {
     val context = LocalContext.current
     val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "UNKNOWN"
     var activationCode by remember { mutableStateOf("") }
+    var showAboutDialog by remember { mutableStateOf(false) }
 
-    // الألوان الجديدة (Medical Cyber Glow)
     val midnightBlue = Color(0xFF0B0F19)
-    val deepBlue = Color(0xFF111827)
     val electricBlue = Color(0xFF00E5FF)
     val vividPurple = Color(0xFFB000FF)
     
-    // خلفية الشاشة المتدرجة العميقة
-    val backgroundBrush = Brush.verticalGradient(
-        colors = listOf(midnightBlue, deepBlue, midnightBlue)
-    )
-
-    // تأثير الزجاج الشفاف بنسبة 40%
-    val glassColor = Color(0xFF1E293B).copy(alpha = 0.4f)
-    val glassBorder = Color.White.copy(alpha = 0.15f)
+    // تأثير الزجاج المحسن (شفافية أكثر لكي يظهر ما خلفه)
+    val glassColor = Color(0xFFFFFFFF).copy(alpha = 0.08f)
+    val glassBorder = Color.White.copy(alpha = 0.2f)
     val textSilver = Color(0xFFE2E8F0)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(brush = backgroundBrush),
-        contentAlignment = Alignment.Center
+            .background(midnightBlue)
     ) {
+        // 1. الكرات المضيئة في الخلفية لخلق تأثير الزجاج (Glassmorphism) الحقيقي
+        Box(
+            modifier = Modifier
+                .offset(x = (-60).dp, y = 100.dp)
+                .size(220.dp)
+                .background(vividPurple.copy(alpha = 0.45f), CircleShape)
+                .blur(70.dp)
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 60.dp, y = (-120).dp)
+                .size(250.dp)
+                .background(electricBlue.copy(alpha = 0.45f), CircleShape)
+                .blur(70.dp)
+        )
+
+        // 2. زر المعلومات ℹ️ (كما طُلب في الملخص)
+        IconButton(
+            onClick = { showAboutDialog = true },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .padding(top = 24.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Info,
+                contentDescription = "About",
+                tint = electricBlue,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+
+        // 3. الكرت الزجاجي الشفاف
         Column(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
+                .align(Alignment.Center)
                 .clip(RoundedCornerShape(28.dp))
                 .background(glassColor)
                 .border(1.5.dp, glassBorder, RoundedCornerShape(28.dp))
                 .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // الأيقونة البرمجية المتوهجة
             Box(
                 modifier = Modifier
                     .size(85.dp)
@@ -106,22 +140,21 @@ fun ActivationScreen() {
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "PICU Calculator",
+                text = "Ahmad Qudah",
                 color = Color.White,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold
             )
             
             Text(
-                text = "Ahmad Qudah",
+                text = "Medications Calculations",
                 color = electricBlue,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Medium
             )
 
             Spacer(modifier = Modifier.height(35.dp))
 
-            // عرض Device ID مع زر النسخ الأنيق
             Text(
                 text = "Device ID:",
                 color = textSilver,
@@ -158,7 +191,6 @@ fun ActivationScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // حقل إدخال كود التفعيل
             OutlinedTextField(
                 value = activationCode,
                 onValueChange = { activationCode = it },
@@ -178,7 +210,6 @@ fun ActivationScreen() {
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // زر التفعيل المتوهج
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -199,7 +230,6 @@ fun ActivationScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // زر الواتساب (تم تصحيح BorderStroke هنا)
             OutlinedButton(
                 onClick = {
                     val phoneNumber = "+962782088812"
@@ -224,6 +254,58 @@ fun ActivationScreen() {
                 Text("Get Code via WhatsApp", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             }
         }
+    }
+
+    // 4. نافذة "حول التطبيق" (المعلومات المفقودة)
+    if (showAboutDialog) {
+        AlertDialog(
+            onDismissRequest = { showAboutDialog = false },
+            containerColor = Color(0xFF1E293B),
+            title = {
+                Text(
+                    text = "About App",
+                    color = electricBlue,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "لا تنسوني ووالدي من صالح دعائكم",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Ahmad Qudah",
+                        fontSize = 18.sp,
+                        color = vividPurple,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "This application is dedicated to cardiac intensive care units for post-operative congenital heart disease in children.",
+                        fontSize = 14.sp,
+                        color = textSilver,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 20.sp
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAboutDialog = false }) {
+                    Text("Close", color = electricBlue, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }
 
