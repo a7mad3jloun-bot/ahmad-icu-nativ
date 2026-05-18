@@ -111,6 +111,41 @@ object GlassColors {
     val WarningYellow = Color(0xFFEAB308)
 }
 
+// مستودع البيانات المعزول هندسياً تمهيداً لربط التشفير وقاعدة البيانات لاحقاً
+object DrugRepository {
+    val sampleDrugs = listOf(
+        MedicalDrug(
+            id = "1",
+            name = "Dopamine",
+            classification = "Inotrope / Vasopressor",
+            isContinuous = true,
+            protocols = listOf(
+                DrugProtocol(AgeCategory.NEONATE, listOf("Neonatal Shock", "Low cardiac output support"), 5.0, 2.0, 20.0, "mcg/kg/min"),
+                DrugProtocol(AgeCategory.CHILD, listOf("Fluid-refractory septic shock", "Post-cardiac surgery hypotension"), 7.5, 5.0, 20.0, "mcg/kg/min")
+            )
+        ),
+        MedicalDrug(
+            id = "2",
+            name = "Amiodarone",
+            classification = "Antiarrhythmic (Class III)",
+            isContinuous = false,
+            protocols = listOf(
+                DrugProtocol(AgeCategory.CHILD, listOf("Pulseless VT/VF defibrillation bolus", "Refractory JET/SVT loading infusion"), 5.0, 5.0, 5.0, "mg/kg")
+            )
+        ),
+        MedicalDrug(
+            id = "3",
+            name = "Epinephrine",
+            classification = "Inotrope / Vasopressor / Anaphylaxis",
+            isContinuous = true,
+            protocols = listOf(
+                DrugProtocol(AgeCategory.NEONATE, listOf("Post-resuscitation stabilization", "Severe bradycardia"), 0.1, 0.05, 1.0, "mcg/kg/min"),
+                DrugProtocol(AgeCategory.CHILD, listOf("Cardiac arrest epinephrine bolus", "Profound hypotension and shock"), 0.1, 0.1, 1.5, "mcg/kg/min")
+            )
+        )
+    )
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -365,7 +400,7 @@ private fun GlassCard(modifier: Modifier = Modifier, glowPhase: Float, content: 
                     brush = Brush.verticalGradient(
                         colors = listOf(Color(0x20FFFFFF), Color(0x10FFFFFF), Color(0x08FFFFFF), Color(0x15FFFFFF))
                     ),
-                    cornerRadius = CornerRadius(24.dp.toPx()),
+                    cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx()),
                     size = Size(width, height)
                 )
 
@@ -377,8 +412,8 @@ private fun GlassCard(modifier: Modifier = Modifier, glowPhase: Float, content: 
                     size = Size(width * 0.6f, height * 0.5f)
                 )
 
-                drawRoundRect(color = GlassColors.ElectricBlue.copy(alpha = 0.6f * borderGlow), cornerRadius = CornerRadius(24.dp.toPx()), size = Size(width, height), style = Stroke(width = 1.5.dp.toPx()))
-                drawRoundRect(color = GlassColors.VividPurple.copy(alpha = 0.3f * borderGlow), cornerRadius = CornerRadius(24.dp.toPx()), size = Size(width - 4.dp.toPx(), height - 4.dp.toPx()), topLeft = Offset(2.dp.toPx(), 2.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
+                drawRoundRect(color = GlassColors.ElectricBlue.copy(alpha = 0.6f * borderGlow), cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx()), size = Size(width, height), style = Stroke(width = 1.5.dp.toPx()))
+                drawRoundRect(color = GlassColors.VividPurple.copy(alpha = 0.3f * borderGlow), cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx()), size = Size(width - 4.dp.toPx(), height - 4.dp.toPx()), topLeft = Offset(2.dp.toPx(), 2.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
             }
     ) { content() }
 }
@@ -391,8 +426,8 @@ private fun DeviceIdCapsule(deviceId: String, context: Context) {
             .fillMaxWidth()
             .height(48.dp)
             .drawBehind {
-                drawRoundRect(brush = Brush.horizontalGradient(listOf(Color(0x18FFFFFF), Color(0x10FFFFFF), Color(0x18FFFFFF))), cornerRadius = CornerRadius(24.dp.toPx()))
-                drawRoundRect(color = GlassColors.GlassBorder, cornerRadius = CornerRadius(24.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
+                drawRoundRect(brush = Brush.horizontalGradient(listOf(Color(0x18FFFFFF), Color(0x10FFFFFF), Color(0x18FFFFFF))), cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx()))
+                drawRoundRect(color = GlassColors.GlassBorder, cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
             }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -421,17 +456,17 @@ private fun NeonTextField(value: String, onValueChange: (String) -> Unit, isFocu
             .drawBehind {
                 val width = size.width
                 val height = size.height
-                drawRoundRect(color = Color(0x10FFFFFF), cornerRadius = CornerRadius(16.dp.toPx()))
+                drawRoundRect(color = Color(0x10FFFFFF), cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx()))
 
                 if (isFocused) {
                     drawRoundRect(
                         brush = Brush.linearGradient(
                             colors = listOf(GlassColors.ElectricBlue.copy(alpha = neonIntensity), GlassColors.VividPurple.copy(alpha = neonIntensity), GlassColors.ElectricBlue.copy(alpha = neonIntensity))
                         ),
-                        cornerRadius = CornerRadius(16.dp.toPx()), style = Stroke(width = 2.dp.toPx())
+                        cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx()), style = Stroke(width = 2.dp.toPx())
                     )
                 } else {
-                    drawRoundRect(color = GlassColors.GlassBorder, cornerRadius = CornerRadius(16.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
+                    drawRoundRect(color = GlassColors.GlassBorder, cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
                 }
             }
     ) {
@@ -461,11 +496,11 @@ private fun GlowingGradientButton(text: String, onClick: () -> Unit, glowPhase: 
                     brush = Brush.radialGradient(
                         colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.3f * glowIntensity), GlassColors.VividPurple.copy(alpha = 0.2f * glowIntensity), Color.Transparent)
                     ),
-                    cornerRadius = CornerRadius(20.dp.toPx()),
+                    cornerRadius = CornerRadius(20.dp.toPx(), 20.dp.toPx()),
                     size = Size(width + 20.dp.toPx(), height + 20.dp.toPx()), topLeft = Offset(-10.dp.toPx(), -10.dp.toPx())
                 )
 
-                drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.9f), GlassColors.VividPurple.copy(alpha = 0.9f), GlassColors.ElectricBlue.copy(alpha = 0.9f))), cornerRadius = CornerRadius(16.dp.toPx()))
+                drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.9f), GlassColors.VividPurple.copy(alpha = 0.9f), GlassColors.ElectricBlue.copy(alpha = 0.9f))), cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx()))
                 drawRect(brush = Brush.verticalGradient(colors = listOf(Color(0x40FFFFFF), Color.Transparent), startY = 0f, endY = height * 0.5f), size = Size(width, height * 0.5f))
             }
             .clickable(onClick = onClick),
@@ -482,8 +517,8 @@ private fun WhatsAppOutlineButton(onClick: () -> Unit) {
             .fillMaxWidth()
             .height(48.dp)
             .drawBehind {
-                drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.5f), GlassColors.VividPurple.copy(alpha = 0.5f))), cornerRadius = CornerRadius(24.dp.toPx()), style = Stroke(width = 1.5f.dp.toPx()))
-                drawRoundRect(color = Color(0x08FFFFFF), cornerRadius = CornerRadius(24.dp.toPx())) // تم إصلاح الخطأ المطبعي هنا بدقة 100%
+                drawRoundRect(brush = Brush.linearGradient(colors = listOf(GlassColors.ElectricBlue.copy(alpha = 0.5f), GlassColors.VividPurple.copy(alpha = 0.5f))), cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx()), style = Stroke(width = 1.5f.dp.toPx()))
+                drawRoundRect(color = Color(0x08FFFFFF), cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx())) // تم إصلاح الخطأ البرمجي هنا بنجاح 100%
             }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -506,41 +541,8 @@ fun CalculatorScreen(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showBottomSheet by remember { mutableStateOf(false) }
 
-    val sampleDrugs = remember {
-        listOf(
-            MedicalDrug(
-                id = "1",
-                name = "Dopamine",
-                classification = "Inotrope / Vasopressor",
-                isContinuous = true,
-                protocols = listOf(
-                    DrugProtocol(AgeCategory.NEONATE, listOf("Neonatal Shock", "Low cardiac output support"), 5.0, 2.0, 20.0, "mcg/kg/min"),
-                    DrugProtocol(AgeCategory.CHILD, listOf("Fluid-refractory septic shock", "Post-cardiac surgery hypotension"), 7.5, 5.0, 20.0, "mcg/kg/min")
-                )
-            ),
-            MedicalDrug(
-                id = "2",
-                name = "Amiodarone",
-                classification = "Antiarrhythmic (Class III)",
-                isContinuous = false,
-                protocols = listOf(
-                    DrugProtocol(AgeCategory.CHILD, listOf("Pulseless VT/VF defibrillation bolus", "Refractory JET/SVT loading infusion"), 5.0, 5.0, 5.0, "mg/kg")
-                )
-            ),
-            MedicalDrug(
-                id = "3",
-                name = "Epinephrine",
-                classification = "Inotrope / Vasopressor / Anaphylaxis",
-                isContinuous = true,
-                protocols = listOf(
-                    DrugProtocol(AgeCategory.NEONATE, listOf("Post-resuscitation stabilization", "Severe bradycardia"), 0.1, 0.05, 1.0, "mcg/kg/min"),
-                    DrugProtocol(AgeCategory.CHILD, listOf("Cardiac arrest epinephrine bolus", "Profound hypotension and shock"), 0.1, 0.1, 1.5, "mcg/kg/min")
-                )
-            )
-        )
-    }
-
-    val filteredDrugs = sampleDrugs.filter {
+    // القراءة من كائن المستودع المعزول لتهيئة قاعدة البيانات لاحقاً
+    val filteredDrugs = DrugRepository.sampleDrugs.filter {
         it.name.contains(searchQuery, ignoreCase = true) || it.classification.contains(searchQuery, ignoreCase = true)
     }
 
@@ -977,6 +979,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // كرت التحذير الصارم وإخلاء المسؤولية باللغة العربية
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1001,7 +1004,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
                 
                 Text(
-                    text = "لا يتحمل مطور البرنامج أحمد القضاه أي مسؤولية اذا تم الاعتماد على حساب الادوية من التطبيق وحده  يجب استشارة الطبيب المسؤول قبل اعتماد أي جرعة , هذا التطبيق للمساعدة فقط وليس لإتخاذ أي قرار طبي.",
+                    text = "لا يتحمل مطور البرنامج أحمد القضاه أي مسؤولية اذا تم الاعتماد على حساب الادوية من التطبيق وحده , يجب استشارة الطبيب المسؤول قبل اعتماد أي جرعة , هذا التطبيق للمساعدة فقط وليس لإتخاذ أي قرار طبي.",
                     fontSize = 15.sp,
                     color = GlassColors.DangerRed,
                     fontWeight = FontWeight.Bold,
