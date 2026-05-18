@@ -13,8 +13,17 @@
     <!-- Deep Night Background -->
     <color name="bg_deep_night">#0B1120</color>
     <color name="bg_card_solid">#1A1F2E</color>
+
+    <!-- Old Background Colors (still used by themes.xml etc.) -->
+    <color name="bg_dark_start">#0F172A</color>
+    <color name="bg_dark_end">#1E293B</color>
+    <color name="bg_card">#1E293B</color>
+    <color name="bg_icon_dark">#111827</color>
+    <color name="bg_surface">#334155</color>
     
     <!-- Glassmorphism Strong -->
+    <color name="glass_white">#18FFFFFF</color>
+    <color name="glass_white_strong">#28FFFFFF</color>
     <color name="glass_surface">#22FFFFFF</color>
     <color name="glass_border">#40FFFFFF</color>
     <color name="glass_glow_teal">#250D9488</color>
