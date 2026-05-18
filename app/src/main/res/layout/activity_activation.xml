@@ -12,7 +12,6 @@
         android:layout_height="match_parent"
         android:padding="28dp">
 
-        <!-- الأيقونة مع التوهج -->
         <FrameLayout
             android:id="@+id/icon_container"
             android:layout_width="110dp"
@@ -36,7 +35,6 @@
                 android:contentDescription="Ahmad Qudah"/>
         </FrameLayout>
 
-        <!-- اسم التطبيق -->
         <TextView
             android:id="@+id/tv_app_name"
             android:layout_width="wrap_content"
@@ -52,7 +50,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- الشعار الثانوي -->
         <TextView
             android:id="@+id/tv_subtitle"
             android:layout_width="wrap_content"
@@ -67,7 +64,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- الكرت الزجاجي -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_activation"
             android:layout_width="0dp"
@@ -87,7 +83,6 @@
                 android:gravity="center_horizontal"
                 android:padding="28dp">
 
-                <!-- Device ID -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -111,7 +106,6 @@
                     android:gravity="center"
                     android:textIsSelectable="true"/>
 
-                <!-- كود التفعيل -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -139,14 +133,13 @@
                     android:padding="14dp"
                     android:importantForAutofill="no"/>
 
-                <!-- زر التحقق -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/verify_button"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="24dp"
                     android:background="@drawable/btn_verify"
-                    android:text="VERIFY & ACTIVATE"
+                    android:text="VERIFY &amp; ACTIVATE"
                     android:textColor="#FFFFFF"
                     android:textSize="15sp"
                     android:textStyle="bold"
@@ -155,7 +148,6 @@
                     android:stateListAnimator="@null"
                     android:elevation="6dp"/>
 
-                <!-- زر واتساب -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/whatsapp_button"
                     android:layout_width="match_parent"
@@ -190,7 +182,6 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- تذييل المعلومات -->
         <LinearLayout
             android:id="@+id/footer_container"
             android:layout_width="0dp"
