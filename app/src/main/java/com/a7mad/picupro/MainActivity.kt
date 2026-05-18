@@ -10,30 +10,16 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.core.EaseInOutSine
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,28 +30,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -87,19 +57,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import java.security.MessageDigest
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-
-object GlassColors {
-    val MidnightBlue = Color(0xFF050A1F)
-    val ElectricBlue = Color(0xFF00D4FF)
-    val VividPurple = Color(0xFFB829DD)
-    val NeonCyan = Color(0xFF00F0FF)
-    val GlassWhite = Color(0xFFFFFFFF)
-    val GlassBorder = Color(0x33FFFFFF)
-}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -473,32 +435,298 @@ private fun WhatsAppOutlineButton(onClick: () -> Unit) {
     }
 }
 
+// ----------------------------------------------------------------------------------
+// شاشة قائمة الأدوية المتطورة (CalculatorScreen) مع تأثير Staggered Animation والـ Bottom Sheet
+// ----------------------------------------------------------------------------------
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalculatorScreen(onNavigateToAbout: () -> Unit) {
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedDrug by remember { mutableStateOf<MedicalDrug?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showBottomSheet by remember { mutableStateOf(false) }
+
+    // محاكاة مصفوفة بيانات آمنة لمطابقة متطلبات الفحص اللوني الفوري والتأثير الحركي
+    val sampleDrugs = remember {
+        listOf(
+            MedicalDrug(
+                id = "1",
+                name = "Dopamine",
+                classification = "Inotrope / Vasopressor",
+                isContinuous = true,
+                protocols = listOf(
+                    DrugProtocol(AgeCategory.NEONATE, listOf("Neonatal Shock", "Low cardiac output support"), 5.0, 2.0, 20.0, "mcg/kg/min"),
+                    DrugProtocol(AgeCategory.CHILD, listOf("Fluid-refractory septic shock", "Post-cardiac surgery hypotension"), 7.5, 5.0, 20.0, "mcg/kg/min")
+                )
+            ),
+            MedicalDrug(
+                id = "2",
+                name = "Amiodarone",
+                classification = "Antiarrhythmic (Class III)",
+                isContinuous = false,
+                protocols = listOf(
+                    DrugProtocol(AgeCategory.CHILD, listOf("Pulseless VT/VF defibrillation bolus", "Refractory JET/SVT loading infusion"), 5.0, 5.0, 5.0, "mg/kg")
+                )
+            ),
+            MedicalDrug(
+                id = "3",
+                name = "Epinephrine",
+                classification = "Inotrope / Vasopressor / Anaphylaxis",
+                isContinuous = true,
+                protocols = listOf(
+                    DrugProtocol(AgeCategory.NEONATE, listOf("Post-resuscitation stabilization", "Severe bradycardia"), 0.1, 0.05, 1.0, "mcg/kg/min"),
+                    DrugProtocol(AgeCategory.CHILD, listOf("Cardiac arrest epinephrine bolus", "Profound hypotension and shock"), 0.1, 0.1, 1.5, "mcg/kg/min")
+                )
+            )
+        )
+    }
+
+    // تصفية حية وفورية للأدوية بناءً على المدخلات لمنع الخطأ
+    val filteredDrugs = sampleDrugs.filter {
+        it.name.contains(searchQuery, ignoreCase = true) || it.classification.contains(searchQuery, ignoreCase = true)
+    }
+
+    // التحكم بالأنيميشن التتابعي (Staggered Effect) برمجياً عبر عداد العناصر مرئية
+    var visibleItemCount by remember { mutableStateOf(0) }
+    LaunchedEffect(filteredDrugs) {
+        visibleItemCount = 0
+        filteredDrugs.forEachIndexed { index, _ ->
+            delay(60) // فارق زمني بمقدار 60ms لكل بطاقة لخلق انسيابية حركية فائقة
+            visibleItemCount = index + 1
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(GlassColors.MidnightBlue).padding(16.dp)) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.White.copy(alpha = 0.05f))
-                .border(BorderStroke(1.5.dp, Brush.horizontalGradient(listOf(GlassColors.ElectricBlue, GlassColors.VividPurple))), RoundedCornerShape(20.dp))
-                .clickable { onNavigateToAbout() }
-                .padding(16.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Filled.Info, contentDescription = "Info", tint = GlassColors.ElectricBlue, modifier = Modifier.size(28.dp))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(text = "About PICU Pro", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "Click to view dedication & disclaimer", color = Color.LightGray, fontSize = 12.sp)
+        Column(modifier = Modifier.fillMaxSize()) {
+            
+            // زر لوحة الـ About العائمة في الأعلى بنظام نيوني لافت
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White.copy(alpha = 0.04f))
+                    .border(BorderStroke(1.2.dp, Brush.horizontalGradient(listOf(GlassColors.ElectricBlue, GlassColors.VividPurple))), RoundedCornerShape(20.dp))
+                    .clickable { onNavigateToAbout() }
+                    .padding(14.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Filled.Info, contentDescription = "Info", tint = GlassColors.ElectricBlue, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(text = "About PICU Pro", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "Click to view dedication & medical disclaimer", color = Color.Gray, fontSize = 11.sp)
+                        }
+                    }
+                    Icon(imageVector = Icons.Filled.Favorite, contentDescription = "Heart", tint = GlassColors.VividPurple, modifier = Modifier.size(20.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // شريط البحث المطور
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search Drug or Classification...", color = Color.Gray, fontSize = 14.sp) },
+                leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = "Search", tint = GlassColors.ElectricBlue) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                    focusedBorderColor = GlassColors.ElectricBlue,
+                    unfocusedBorderColor = GlassColors.GlassBorder,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                shape = RoundedCornerShape(16.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // قائمة البطاقات الحركية المتتابعة
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                itemsIndexed(filteredDrugs) { index, drug ->
+                    val isVisible = index < visibleItemCount
+                    
+                    AnimatedVisibility(
+                        visible = isVisible,
+                        enter = fadeIn(animationSpec = tween(300)) + slideInVertically(animationSpec = tween(300), initialOffsetY = { 50 }),
+                        exit = fadeOut(animationSpec = tween(150))
+                    ) {
+                        // كرت دواء زجاجي احترافي
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .border(BorderStroke(1.dp, GlassColors.GlassBorder), RoundedCornerShape(20.dp))
+                                .clickable {
+                                    selectedDrug = drug
+                                    showBottomSheet = true
+                                }
+                                .padding(16.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = drug.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+                                    
+                                    // تاغ نوع الإعطاء (Continuous / Bolus)
+                                    Text(
+                                        text = if (drug.isContinuous) "Continuous" else "Bolus",
+                                        color = if (drug.isContinuous) GlassColors.NeonCyan else GlassColors.VividPurple,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (drug.isContinuous) GlassColors.ElectricBlue.copy(alpha = 0.1f) else GlassColors.VividPurple.copy(alpha = 0.1f))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+
+                                Text(text = drug.classification, color = Color.Gray, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp))
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // صف الكبسولات والمؤشرات العمرية (الفصل اللوني الصارم)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    drug.protocols.forEach { protocol ->
+                                        val isNeonate = protocol.category == AgeCategory.NEONATE
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(if (isNeonate) Color(0xFFB829DD).copy(alpha = 0.15f) else Color(0xFF00D4FF).copy(alpha = 0.15f))
+                                                .border(BorderStroke(1.dp, if (isNeonate) Color(0xFFB829DD) else Color(0xFF00D4FF)), RoundedCornerShape(12.dp))
+                                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = if (isNeonate) "🟣 Neonate" else "🔵 Child",
+                                                color = if (isNeonate) Color(0xFFE879F9) else Color(0xFF38BDF8),
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                Icon(imageVector = Icons.Filled.Favorite, contentDescription = "Heart", tint = GlassColors.VividPurple, modifier = Modifier.size(24.dp))
             }
         }
-        Text(text = "PICU Calculator Content\n(Will be active here)", color = Color.Gray, fontSize = 18.sp, textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.Center))
+
+        // --------------------------------------------------------------------------
+        // نافذة العرض السفلية الطبية المتطورة (Modal Bottom Sheet) للأبحاث والبروتوكولات
+        // --------------------------------------------------------------------------
+        if (showBottomSheet && selectedDrug != null) {
+            ModalBottomSheet(
+                onDismissRequest = { showBottomSheet = false },
+                sheetState = sheetState,
+                containerColor = GlassColors.MidnightBlue,
+                scrimColor = Color.Black.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+            ) {
+                val drug = selectedDrug!!
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 8.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    // رأس شاشة الحوار
+                    Text(text = drug.name, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                    Text(text = drug.classification, color = GlassColors.ElectricBlue, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), color = GlassColors.GlassBorder)
+
+                    // معالجة وعرض البروتوكولات بفصل لوني كامل وهندسة دقيقة
+                    drug.protocols.forEach { protocol ->
+                        val isNeonate = protocol.category == AgeCategory.NEONATE
+                        val sectionColor = if (isNeonate) Color(0xFFB829DD) else Color(0xFF00D4FF)
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(Color.White.copy(alpha = 0.03f))
+                                .border(BorderStroke(1.2.dp, sectionColor.copy(alpha = 0.6f)), RoundedCornerShape(18.dp))
+                                .padding(16.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (isNeonate) "🟣 Neonatal Protocol" else "🔵 Pediatric Protocol",
+                                    color = if (isNeonate) Color(0xFFE879F9) else Color(0xFF38BDF8),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(text = "Clinical Indications:", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            
+                            protocol.indications.forEach { indication ->
+                                Text(text = "• $indication", color = Color.LightGray, fontSize = 13.sp, modifier = Modifier.padding(start = 8.dp, top = 2.dp))
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            // تفاصيل النطاق الآمن للجرعات من المحرك الطبي
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = "Min Dose", color = Color.Gray, fontSize = 11.sp)
+                                    Text(text = "${protocol.minDose} ${protocol.doseUnit}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = "Default Start", color = sectionColor, fontSize = 11.sp)
+                                    Text(text = "${protocol.defaultDose} ${protocol.doseUnit}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = "Max Safe Dose", color = Color(0xFFEF4444), fontSize = 11.sp)
+                                    Text(text = "${protocol.maxDose} ${protocol.doseUnit}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // صمام أمان بصري: شريط تحذيري نحيف أصفر سريري في أسفل الحوار
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFEAB308).copy(alpha = 0.1f))
+                            .border(BorderStroke(1.dp, Color(0xFFEAB308).copy(alpha = 0.4f)), RoundedCornerShape(12.dp))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Filled.Info, contentDescription = "Alert", tint = Color(0xFFEAB308), modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "CRITICAL SAFETY: Always cross-verify calculated doses with your specific unit protocols before clinical administration.",
+                            color = Color(0xFFFEF08A),
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
+            }
+        }
     }
 }
 
