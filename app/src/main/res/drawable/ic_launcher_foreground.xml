@@ -2,54 +2,15 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="1024"
-    android:viewportHeight="1024">
-    
-    <!-- خلفية سوداء دائرية -->
-    <path
-        android:pathData="M0,0h1024v1024h-1024z"
-        android:fillColor="#0B1120"/>
-    
-    <!-- درع طبي شفاف -->
-    <path
-        android:pathData="M196,16H828A180,180 0,0 1,1008 196V600C1008,860 792,1008 512,1008C232,1008 16,860 16,600V196A180,180 0,0 1,196 16Z"
-        android:fillColor="#00000000"
-        android:strokeColor="#20FFFFFF"
-        android:strokeWidth="12"/>
-    
-    <!-- تدرج الحروف A.Q -->
-    <path
-        android:pathData="M280,700 L370,320 L460,700 M310,560 L430,560 M520,320 L610,320 L610,700 M520,520 L610,520"
-        android:fillColor="#00000000"
-        android:strokeColor="#0D9488"
-        android:strokeWidth="48"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"/>
-    
-    <!-- تأثير زجاجي على الحروف -->
-    <path
-        android:pathData="M280,700 L370,320 L460,700 M310,560 L430,560 M520,320 L610,320 L610,700 M520,520 L610,520"
-        android:fillColor="#00000000"
-        android:strokeColor="#30FFFFFF"
-        android:strokeWidth="40"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"/>
-
-    <!-- خط ECG طبي -->
-    <path
-        android:pathData="M200,750 L320,750 L380,600 L440,850 L500,750 L824,750"
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="18"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"/>
-        
-    <!-- توهج التيل تحت ECG -->
-    <path
-        android:pathData="M200,750 L320,750 L380,600 L440,850 L500,750 L824,750"
-        android:fillColor="#00000000"
-        android:strokeColor="#300D9488"
-        android:strokeWidth="32"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"/>
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="2.5"
+        android:scaleY="2.5"
+        android:translateX="24"
+        android:translateY="24">
+        <path
+            android:fillColor="#00E5FF"
+            android:pathData="M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5C2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z"/>
+    </group>
 </vector>

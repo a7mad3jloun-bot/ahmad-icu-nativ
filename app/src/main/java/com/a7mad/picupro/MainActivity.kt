@@ -10,6 +10,9 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
@@ -48,7 +52,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        ActivationScreen()
+                        MainNavigationScreen()
                     }
                 }
             }
@@ -56,159 +60,109 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// نظام التنقل الرئيسي بين الشاشات الثلاث
+@Composable
+fun MainNavigationScreen() {
+    var currentScreen by remember { mutableStateOf("activation") }
+    var confirmedDeviceId by remember { mutableStateOf("") }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (currentScreen) {
+            "activation" -> ActivationScreen(
+                onActivationSuccess = { deviceId ->
+                    confirmedDeviceId = deviceId
+                    currentScreen = "calculator"
+                }
+            )
+            "calculator" -> CalculatorScreen(
+                onNavigateToAbout = { currentScreen = "about" }
+            )
+            "about" -> AboutScreen(
+                onBack = { currentScreen = "calculator" }
+            )
+        }
+    }
+}
+
+// 1. شاشة التفعيل المبهرة بالتأثير الزجاجي المطور
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActivationScreen() {
+fun ActivationScreen(onActivationSuccess: (String) -> Unit) {
     val context = LocalContext.current
     val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "UNKNOWN"
     var activationCode by remember { mutableStateOf("") }
-    var showAboutDialog by remember { mutableStateOf(false) }
 
     val midnightBlue = Color(0xFF0B0F19)
+    val deepBlue = Color(0xFF111827)
     val electricBlue = Color(0xFF00E5FF)
     val vividPurple = Color(0xFFB000FF)
     
-    // تأثير الزجاج المحسن (شفافية أكثر لكي يظهر ما خلفه)
-    val glassColor = Color(0xFFFFFFFF).copy(alpha = 0.08f)
-    val glassBorder = Color.White.copy(alpha = 0.2f)
+    val glassColor = Color(0xFFFFFFFF).copy(alpha = 0.07f)
+    val glassBorder = Color.White.copy(alpha = 0.25f)
     val textSilver = Color(0xFFE2E8F0)
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(midnightBlue)
-    ) {
-        // 1. الكرات المضيئة في الخلفية لخلق تأثير الزجاج (Glassmorphism) الحقيقي
-        Box(
-            modifier = Modifier
-                .offset(x = (-60).dp, y = 100.dp)
-                .size(220.dp)
-                .background(vividPurple.copy(alpha = 0.45f), CircleShape)
-                .blur(70.dp)
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = 60.dp, y = (-120).dp)
-                .size(250.dp)
-                .background(electricBlue.copy(alpha = 0.45f), CircleShape)
-                .blur(70.dp)
-        )
+    Box(modifier = Modifier.fillMaxSize().background(midnightBlue)) {
+        // كرات التوهج الخلفية لخلق تأثير زجاجي ثلاثي الأبعاد
+        Box(modifier = Modifier.offset(x = (-50).dp, y = 80.dp).size(230.dp).background(vividPurple.copy(alpha = 0.5f), CircleShape).blur(80.dp))
+        Box(modifier = Modifier.align(Alignment.BottomEnd).offset(x = 50.dp, y = (-100).dp).size(260.dp).background(electricBlue.copy(alpha = 0.5f), CircleShape).blur(80.dp))
 
-        // 2. زر المعلومات ℹ️ (كما طُلب في الملخص)
-        IconButton(
-            onClick = { showAboutDialog = true },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .padding(top = 24.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Info,
-                contentDescription = "About",
-                tint = electricBlue,
-                modifier = Modifier.size(32.dp)
-            )
-        }
-
-        // 3. الكرت الزجاجي الشفاف
         Column(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .align(Alignment.Center)
-                .clip(RoundedCornerShape(28.dp))
+                .clip(RoundedCornerShape(32.dp))
                 .background(glassColor)
-                .border(1.5.dp, glassBorder, RoundedCornerShape(28.dp))
+                .border(BorderStroke(1.5.dp, Brush.linearGradient(listOf(electricBlue.copy(alpha = 0.6f), vividPurple.copy(alpha = 0.6f)))), RoundedCornerShape(32.dp))
                 .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
-                modifier = Modifier
-                    .size(85.dp)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(electricBlue, vividPurple))),
+                modifier = Modifier.size(90.dp).clip(CircleShape).background(Brush.linearGradient(listOf(electricBlue, vividPurple))),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Favorite,
-                    contentDescription = "Medical Heart",
-                    tint = Color.White,
-                    modifier = Modifier.size(45.dp)
-                )
+                Icon(imageVector = Icons.Filled.Favorite, contentDescription = "Heart", tint = Color.White, modifier = Modifier.size(48.dp))
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "Ahmad Qudah",
-                color = Color.White,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-            
-            Text(
-                text = "Medications Calculations",
-                color = electricBlue,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Text(text = "Ahmad Qudah", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+            Text(text = "Medications Calculations", color = electricBlue, fontSize = 17.sp, fontWeight = FontWeight.Medium)
 
             Spacer(modifier = Modifier.height(35.dp))
 
-            Text(
-                text = "Device ID:",
-                color = textSilver,
-                fontSize = 13.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
+            Text(text = "Device ID:", color = textSilver, fontSize = 13.sp, modifier = Modifier.align(Alignment.Start))
             
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.05f)).padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = deviceId,
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
+                Text(text = deviceId, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 IconButton(onClick = {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = ClipData.newPlainText("Device ID", deviceId)
-                    clipboard.setPrimaryClip(clip)
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Device ID", deviceId))
                     Toast.makeText(context, "Device ID Copied!", Toast.LENGTH_SHORT).show()
                 }) {
-                    Icon(
-                        imageVector = Icons.Filled.ContentCopy,
-                        contentDescription = "Copy ID",
-                        tint = electricBlue
-                    )
+                    Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = "Copy", tint = electricBlue)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             OutlinedTextField(
                 value = activationCode,
                 onValueChange = { activationCode = it },
                 label = { Text("Enter Activation Code", color = textSilver) },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = electricBlue,
-                    unfocusedBorderColor = glassBorder,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = electricBlue,
-                    containerColor = Color.Transparent
+                    focusedBorderColor = electricBlue, unfocusedBorderColor = glassBorder,
+                    focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+                    cursorColor = electricBlue, containerColor = Color.Transparent
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             Box(
                 modifier = Modifier
@@ -219,13 +173,14 @@ fun ActivationScreen() {
                     .clickable {
                         if (verifyActivationCode(deviceId, activationCode)) {
                             Toast.makeText(context, "Activated Successfully!", Toast.LENGTH_LONG).show()
+                            onActivationSuccess(deviceId)
                         } else {
                             Toast.makeText(context, "Invalid Code!", Toast.LENGTH_SHORT).show()
                         }
                     },
                 contentAlignment = Alignment.Center
             ) {
-                Text("VERIFY & ACTIVATE", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("VERIFY & ACTIVATE", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -235,18 +190,11 @@ fun ActivationScreen() {
                     val phoneNumber = "+962782088812"
                     val message = "Hello, I need an activation code for PICUCalculator.\nMy Device ID is: $deviceId"
                     val url = "https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encode(message)}"
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse(url)
-                    }
-                    try {
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
+                    try { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) {
                         Toast.makeText(context, "WhatsApp is not installed.", Toast.LENGTH_SHORT).show()
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(55.dp),
+                modifier = Modifier.fillMaxWidth().height(55.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = electricBlue),
                 border = BorderStroke(1.5.dp, electricBlue),
                 shape = RoundedCornerShape(16.dp)
@@ -255,57 +203,144 @@ fun ActivationScreen() {
             }
         }
     }
+}
 
-    // 4. نافذة "حول التطبيق" (المعلومات المفقودة)
-    if (showAboutDialog) {
-        AlertDialog(
-            onDismissRequest = { showAboutDialog = false },
-            containerColor = Color(0xFF1E293B),
-            title = {
+// 2. الشاشة الرئيسية للتطبيق (مكان الة الحاسبة) وبها كرت الـ About الجذاب والعائم
+@Composable
+fun CalculatorScreen(onNavigateToAbout: () -> Unit) {
+    val midnightBlue = Color(0xFF0B0F19)
+    val electricBlue = Color(0xFF00E5FF)
+    val vividPurple = Color(0xFFB000FF)
+
+    Box(modifier = Modifier.fillMaxSize().background(midnightBlue).padding(16.dp)) {
+        // بطاقة زجاجية نيونية عائمة لجذب المستخدم للضغط على About
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.White.copy(alpha = 0.05f))
+                .border(BorderStroke(1.5.dp, Brush.horizontalGradient(listOf(electricBlue, vividPurple))), RoundedCornerShape(20.dp))
+                .clickable { onNavigateToAbout() }
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Filled.Info, contentDescription = "Info", tint = electricBlue, modifier = Modifier.size(28.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(text = "About PICU Pro", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Click to view dedication & disclaimer", color = Color.LightGray, fontSize = 12.sp)
+                    }
+                }
+                Icon(imageVector = Icons.Filled.Favorite, contentDescription = "Heart", tint = vividPurple, modifier = Modifier.size(24.dp))
+            }
+        }
+
+        // محتوى الحاسبة المستقبلي يوضع هنا
+        Text(
+            text = "PICU Calculator Content\n(Will be active here)",
+            color = Color.Gray,
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.Center)
+        )
+    }
+}
+
+// 3. شاشة "حول التطبيق" المنفصلة كلياً بتصميم عصري وإخلاء المسؤولية الإنجليزي
+@Composable
+fun AboutScreen(onBack: () -> Unit) {
+    val midnightBlue = Color(0xFF0B0F19)
+    val electricBlue = Color(0xFF00E5FF)
+    val vividPurple = Color(0xFFB000FF)
+    val glassColor = Color(0xFFFFFFFF).copy(alpha = 0.05f)
+
+    Box(modifier = Modifier.fillMaxSize().background(midnightBlue).padding(20.dp)) {
+        // كرات توهج لتجميل شاشة About
+        Box(modifier = Modifier.offset(x = 180.dp, y = 40.dp).size(200.dp).background(electricBlue.copy(alpha = 0.35f), CircleShape).blur(70.dp))
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            // زر العودة الخلفي الأنيق
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onBack() }.padding(8.dp)
+            ) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back", tint = electricBlue)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Back to Main", color = electricBlue, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // بطاقة الدعاء والتوقيع
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(glassColor)
+                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(24.dp))
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    text = "About App",
-                    color = electricBlue,
+                    text = "لا تنسوني ووالدي من صالح دعائكم",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Ahmad Qudah",
+                    fontSize = 18.sp,
+                    color = vividPurple,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "This application is dedicated to cardiac intensive care units for post-operative congenital heart disease in children.",
+                    fontSize = 14.sp,
+                    color = Color.LightGray,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // بطاقة إخلاء المسؤولية الصارمة (Disclaimer) باللغة الإنجليزية
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color(0xFFEF4444).copy(alpha = 0.08f)) // خلفية حمراء تحذيرية خفيفة جداً
+                    .border(1.5.dp, Color(0xFFEF4444).copy(alpha = 0.4f), RoundedCornerShape(24.dp))
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "MEDICAL DISCLAIMER",
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
+                    color = Color(0xFFEF4444),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
-            },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "لا تنسوني ووالدي من صالح دعائكم",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Ahmad Qudah",
-                        fontSize = 18.sp,
-                        color = vividPurple,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "This application is dedicated to cardiac intensive care units for post-operative congenital heart disease in children.",
-                        fontSize = 14.sp,
-                        color = textSilver,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showAboutDialog = false }) {
-                    Text("Close", color = electricBlue, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "This application is a medical calculation tool intended solely for educational and cognitive support for specialized healthcare professionals. It DOES NOT substitute professional medical advice, diagnosis, or treatment. You must obtain official medical approval and verify all doses from authorized clinical protocols before applying any information or calculations derived from this application in practice.",
+                    fontSize = 13.sp,
+                    color = Color(0xFFFCA5A5),
+                    textAlign = TextAlign.Justify,
+                    lineHeight = 18.sp
+                )
             }
-        )
+        }
     }
 }
 
