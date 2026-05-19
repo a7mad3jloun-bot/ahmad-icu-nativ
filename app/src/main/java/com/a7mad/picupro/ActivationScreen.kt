@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import com.a7mad.picupro.security.ActivationManager
 import kotlinx.coroutines.launch
 
-// الألوان المعتمدة (Dark Theme)
 private val DarkBg = Color(0xFF111827)
 private val TealPrimary = Color(0xFF0D9488)
 private val CardBg = Color(0xFF1F2937)
@@ -127,7 +126,8 @@ fun ActivationScreen(onActivationSuccess: () -> Unit) {
 
         Button(
             onClick = {
-                if (ActivationManager.validateCode(deviceId, enteredCode) is ActivationManager.ValidationResult.Valid) {
+                val result = ActivationManager.validateCode(deviceId, enteredCode)
+                if (result is ActivationManager.ValidationResult.Valid) {
                     coroutineScope.launch {
                         ActivationManager.setActivated(context, true)
                         onActivationSuccess()
