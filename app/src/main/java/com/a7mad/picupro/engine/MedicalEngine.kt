@@ -2,16 +2,7 @@ package com.a7mad.picupro.engine
 
 import kotlin.math.roundToInt
 
-/**
- * المحرك الطبي الذهبي – معزول تمامًا عن واجهة المستخدم.
- * يحتوي على دوال الحساب العادي، الحساب العكسي للجرعات المتقطعة
- * (Bolus)، والحساب العكسي للجرعات المستمرة (Infusion).
- */
 object MedicalEngine {
-
-    // ---------------------------------------------------------------
-    // 1. تحليل الوحدة
-    // ---------------------------------------------------------------
 
     data class ParsedUnit(
         val baseUnit: String,
@@ -40,33 +31,15 @@ object MedicalEngine {
         return ParsedUnit(baseUnit, hasKg, timeFactor)
     }
 
-    // ---------------------------------------------------------------
-    // 2. حساب التركيز
-    // ---------------------------------------------------------------
-
     data class Concentration(
         val value: Double,
         val unit: String
     )
 
-    fun calculateConcentration(
-        amount: Double,
-        volume: Double,
-        unit: String?
-    ): Concentration {
-        if (volume <= 0.0 || amount <= 0.0) {
-            throw IllegalArgumentException("MissingData")
-        }
-        val safeUnit = unit?.lowercase() ?: ""
-        return Concentration(
-            value = amount / volume,
-            unit = "$safeUnit/mL"
-        )
+    fun calculateConcentration(amount: Double, volume: Double, unit: String?): Concentration {
+        if (volume <= 0.0 || amount <= 0.0) throw IllegalArgumentException("MissingData")
+        return Concentration(value = amount / volume, unit = "${unit?.lowercase() ?: ""}/mL")
     }
-
-    // ---------------------------------------------------------------
-    // 3. كائن النتيجة
-    // ---------------------------------------------------------------
 
     data class CalculationResult(
         val rawResult: Double? = null,
@@ -74,31 +47,19 @@ object MedicalEngine {
         val calculatedDose: Double? = null,
         val warnings: List<String> = emptyList(),
         val error: String? = null,
-        val displayMode: String = ""
+        var displayMode: String = ""
     )
 
-    // ---------------------------------------------------------------
-    // 4. الحساب العادي
-    // ---------------------------------------------------------------
-
     data class CalculateParams(
-        val dose: Double,
-        val weight: Double,
-        val unit: String?,
-        val totalDrugAmount: Double,
-        val totalVolume: Double,
-        val totalDrugUnit: String?,
-        val maxDose: Double?,
-        val isContinuous: Boolean
+        val dose: Double, val weight: Double, val unit: String?,
+        val totalDrugAmount: Double, val totalVolume: Double, val totalDrugUnit: String?,
+        val maxDose: Double?, val isContinuous: Boolean
     )
 
     fun calculate(params: CalculateParams): CalculationResult {
         val result = CalculationResult()
-
-        return try {
-            val conc = calculateConcentration(
-                params.totalDrugAmount, params.totalVolume, params.totalDrugUnit
-            )
+        try {
+            val conc = calculateConcentration(params.totalDrugAmount, params.totalVolume, params.totalDrugUnit)
             val doseInfo = parseUnitString(params.unit)
             val drugInfo = parseUnitString(params.totalDrugUnit)
 
@@ -130,225 +91,94 @@ object MedicalEngine {
             params.maxDose?.let { max ->
                 val patientMax = max * weightFactor
                 if (effectiveDose > patientMax + 0.0001) {
-                    warnings.add(
-                        "DANGER: Max Dose Exceeded! " +
-                        "(Calc: ${"%.3f".format(effectiveDose)}, " +
-                        "Pt Max: ${"%.3f".format(patientMax)} ${doseInfo.baseUnit})"
-                    )
+                    warnings.add("DANGER: Max Dose Exceeded! (Calc: ${"%.3f".format(effectiveDose)}, Pt Max: ${"%.3f".format(patientMax)} ${doseInfo.baseUnit})")
                 }
             }
             result.warnings = warnings
-
-            result
         } catch (e: Exception) {
-            result.error = if (e.message == "MissingData") {
-                "Missing Drug Amount or Volume"
-            } else {
-                e.message ?: "Unknown error"
-            }
-            result
+            result.error = if (e.message == "MissingData") "Missing Drug Amount or Volume" else (e.message ?: "Unknown error")
         }
+        return result
     }
 
-    // ---------------------------------------------------------------
-    // 5. الحساب العكسي – جرعة متقطعة (Bolus)
-    // ---------------------------------------------------------------
-
     data class ReverseBolusParams(
-        val dose: Double,
-        val weight: Double,
-        val unit: String?,
-        val totalDrugAmount: Double,
-        val totalVolume: Double,
-        val totalDrugUnit: String?,
-        val maxDose: Double?,
-        val minDose: Double?
+        val dose: Double, val weight: Double, val unit: String?,
+        val totalDrugAmount: Double, val totalVolume: Double, val totalDrugUnit: String?,
+        val maxDose: Double?, val minDose: Double?
     )
 
     data class ReverseBolusByVolumeParams(
-        val givenVolume: Double,
-        val weight: Double,
-        val unit: String?,
-        val totalDrugAmount: Double,
-        val totalVolume: Double,
-        val totalDrugUnit: String?,
-        val maxDose: Double?,
-        val minDose: Double?
+        val givenVolume: Double, val weight: Double, val unit: String?,
+        val totalDrugAmount: Double, val totalVolume: Double, val totalDrugUnit: String?,
+        val maxDose: Double?, val minDose: Double?
     )
 
     data class ReverseBolusResult(
-        val volume: String? = null,
-        val raw: Double? = null,
-        val doseGiven: String? = null,
-        val unit: String? = null,
-        val error: String? = null,
-        val warning: String? = null
+        val volume: String? = null, val raw: Double? = null, val doseGiven: String? = null,
+        val unit: String? = null, var error: String? = null, var warning: String? = null
     )
 
     fun reverseBolus(params: ReverseBolusParams): ReverseBolusResult {
-        val vol = params.totalVolume
-        val amt = params.totalDrugAmount
+        val vol = params.totalVolume; val amt = params.totalDrugAmount
+        if (vol <= 0.0 || amt <= 0.0) return ReverseBolusResult(error = "Missing Drug Amount or Volume")
+        if (params.dose.isNaN() || params.weight.isNaN()) return ReverseBolusResult(error = "Invalid inputs")
 
-        if (vol <= 0.0 || amt <= 0.0) {
-            return ReverseBolusResult(error = "Missing Drug Amount or Volume")
-        }
-        if (params.dose.isNaN() || params.weight.isNaN() || vol <= 0.0) {
-            return ReverseBolusResult(error = "Invalid inputs")
-        }
-
-        val doseInfo = parseUnitString(params.unit)
-        val drugInfo = parseUnitString(params.totalDrugUnit)
+        val doseInfo = parseUnitString(params.unit); val drugInfo = parseUnitString(params.totalDrugUnit)
         val weightFactor = if (doseInfo.hasKg) params.weight else 1.0
         val effectiveDose = params.dose * weightFactor
 
         var concentration = amt / vol
-        when {
-            doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg"  -> concentration *= 1000.0
-            doseInfo.baseUnit == "mg"  && drugInfo.baseUnit == "mcg" -> concentration /= 1000.0
-        }
+        when { doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg" -> concentration *= 1000.0; doseInfo.baseUnit == "mg" && drugInfo.baseUnit == "mcg" -> concentration /= 1000.0 }
 
         val volumeToDraw = effectiveDose / concentration
+        val result = ReverseBolusResult(volume = "%.2f".format(volumeToDraw), raw = volumeToDraw, doseGiven = "%.3f".format(effectiveDose), unit = doseInfo.baseUnit)
 
-        var error: String? = null
-        var warning: String? = null
-
-        params.maxDose?.let { max ->
-            val patientMax = max * weightFactor
-            if (effectiveDose > patientMax) {
-                error = "DANGER: Max Dose Exceeded! " +
-                    "(Calc: ${"%.3f".format(effectiveDose)}, " +
-                    "Pt Max: ${"%.3f".format(patientMax)} ${doseInfo.baseUnit})"
-            }
-        }
-
-        params.minDose?.let { min ->
-            val patientMin = min * weightFactor
-            if (effectiveDose < patientMin) {
-                warning = "Low Dose Alert! " +
-                    "(Calc: ${"%.3f".format(effectiveDose)}, " +
-                    "Pt Min: ${"%.3f".format(patientMin)} ${doseInfo.baseUnit}) - Renal/Hepatic Adjustment?"
-            }
-        }
-
-        return ReverseBolusResult(
-            volume = "%.2f".format(volumeToDraw),
-            raw = volumeToDraw,
-            doseGiven = "%.3f".format(effectiveDose),
-            unit = doseInfo.baseUnit,
-            error = error,
-            warning = warning
-        )
+        params.maxDose?.let { max -> val patientMax = max * weightFactor; if (effectiveDose > patientMax) result.error = "DANGER: Max Dose Exceeded! (Calc: ${"%.3f".format(effectiveDose)}, Pt Max: ${"%.3f".format(patientMax)} ${doseInfo.baseUnit})" }
+        params.minDose?.let { min -> val patientMin = min * weightFactor; if (effectiveDose < patientMin) result.warning = "Low Dose Alert! (Calc: ${"%.3f".format(effectiveDose)}, Pt Min: ${"%.3f".format(patientMin)} ${doseInfo.baseUnit}) - Renal/Hepatic Adjustment?" }
+        return result
     }
 
-    /**
-     * الحساب العكسي للجرعات المتقطعة (Bolus) عن طريق الحجم المعطى.
-     * الممرض يدخل الحجم المعطى (mL) فنستخرج الجرعة الفعلية التي تلقاها المريض.
-     */
     fun reverseBolusByVolume(params: ReverseBolusByVolumeParams): ReverseBolusResult {
-        val vol = params.totalVolume
-        val amt = params.totalDrugAmount
+        val vol = params.totalVolume; val amt = params.totalDrugAmount
+        if (vol <= 0.0 || amt <= 0.0) return ReverseBolusResult(error = "Missing Drug Amount or Volume")
+        if (params.givenVolume.isNaN() || params.weight.isNaN()) return ReverseBolusResult(error = "Invalid inputs")
 
-        if (vol <= 0.0 || amt <= 0.0) {
-            return ReverseBolusResult(error = "Missing Drug Amount or Volume")
-        }
-        if (params.givenVolume.isNaN() || params.weight.isNaN() || vol <= 0.0) {
-            return ReverseBolusResult(error = "Invalid inputs")
-        }
-
-        val doseInfo = parseUnitString(params.unit)
-        val drugInfo = parseUnitString(params.totalDrugUnit)
+        val doseInfo = parseUnitString(params.unit); val drugInfo = parseUnitString(params.totalDrugUnit)
         val weightFactor = if (doseInfo.hasKg) params.weight else 1.0
 
         var concentration = amt / vol
-        when {
-            doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg"  -> concentration *= 1000.0
-            doseInfo.baseUnit == "mg"  && drugInfo.baseUnit == "mcg" -> concentration /= 1000.0
-        }
+        when { doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg" -> concentration *= 1000.0; doseInfo.baseUnit == "mg" && drugInfo.baseUnit == "mcg" -> concentration /= 1000.0 }
 
         val effectiveDose = params.givenVolume * concentration
+        val result = ReverseBolusResult(volume = "%.2f".format(params.givenVolume), raw = effectiveDose, doseGiven = "%.3f".format(effectiveDose), unit = doseInfo.baseUnit)
 
-        var error: String? = null
-        var warning: String? = null
-
-        params.maxDose?.let { max ->
-            val patientMax = max * weightFactor
-            if (effectiveDose > patientMax) {
-                error = "DANGER: Max Dose Exceeded! " +
-                    "(Calc: ${"%.3f".format(effectiveDose)}, " +
-                    "Pt Max: ${"%.3f".format(patientMax)} ${doseInfo.baseUnit})"
-            }
-        }
-
-        params.minDose?.let { min ->
-            val patientMin = min * weightFactor
-            if (effectiveDose < patientMin) {
-                warning = "Low Dose Alert! " +
-                    "(Calc: ${"%.3f".format(effectiveDose)}, " +
-                    "Pt Min: ${"%.3f".format(patientMin)} ${doseInfo.baseUnit}) - Renal/Hepatic Adjustment?"
-            }
-        }
-
-        return ReverseBolusResult(
-            volume = "%.2f".format(params.givenVolume),
-            raw = effectiveDose,
-            doseGiven = "%.3f".format(effectiveDose),
-            unit = doseInfo.baseUnit,
-            error = error,
-            warning = warning
-        )
+        params.maxDose?.let { max -> val patientMax = max * weightFactor; if (effectiveDose > patientMax) result.error = "DANGER: Max Dose Exceeded! (Calc: ${"%.3f".format(effectiveDose)}, Pt Max: ${"%.3f".format(patientMax)} ${doseInfo.baseUnit})" }
+        params.minDose?.let { min -> val patientMin = min * weightFactor; if (effectiveDose < patientMin) result.warning = "Low Dose Alert! (Calc: ${"%.3f".format(effectiveDose)}, Pt Min: ${"%.3f".format(patientMin)} ${doseInfo.baseUnit}) - Renal/Hepatic Adjustment?" }
+        return result
     }
 
-    // ---------------------------------------------------------------
-    // 6. الحساب العكسي – جرعة مستمرة (Infusion)
-    // ---------------------------------------------------------------
-
     data class ReverseInfusionParams(
-        val rate: Double,
-        val weight: Double,
-        val unit: String?,
-        val totalDrugAmount: Double,
-        val totalVolume: Double,
-        val totalDrugUnit: String?
+        val rate: Double, val weight: Double, val unit: String?,
+        val totalDrugAmount: Double, val totalVolume: Double, val totalDrugUnit: String?
     )
 
     data class ReverseInfusionResult(
-        val dose: String? = null,
-        val raw: Double? = null,
-        val unit: String? = null,
-        val rate: Double? = null,
-        val concentration: Double? = null,
-        val error: String? = null
+        val dose: String? = null, val raw: Double? = null, val unit: String? = null,
+        val rate: Double? = null, val concentration: Double? = null, val error: String? = null
     )
 
     fun reverseInfusion(params: ReverseInfusionParams): ReverseInfusionResult {
-        val vol = params.totalVolume
-        val amt = params.totalDrugAmount
+        val vol = params.totalVolume; val amt = params.totalDrugAmount
+        if (vol <= 0.0 || amt <= 0.0) return ReverseInfusionResult(error = "Missing Drug Amount or Volume")
+        if (params.rate.isNaN() || params.weight.isNaN()) return ReverseInfusionResult(error = "Invalid inputs")
 
-        if (vol <= 0.0 || amt <= 0.0) {
-            return ReverseInfusionResult(error = "Missing Drug Amount or Volume")
-        }
-        if (params.rate.isNaN() || params.weight.isNaN() || vol <= 0.0) {
-            return ReverseInfusionResult(error = "Invalid inputs")
-        }
-
-        val doseInfo = parseUnitString(params.unit)
-        val drugInfo = parseUnitString(params.totalDrugUnit)
-
+        val doseInfo = parseUnitString(params.unit); val drugInfo = parseUnitString(params.totalDrugUnit)
         var concentration = amt / vol
-        when {
-            doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg"  -> concentration *= 1000.0
-            doseInfo.baseUnit == "mg"  && drugInfo.baseUnit == "mcg" -> concentration /= 1000.0
-        }
+        when { doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg" -> concentration *= 1000.0; doseInfo.baseUnit == "mg" && drugInfo.baseUnit == "mcg" -> concentration /= 1000.0 }
 
         val timeFactor = doseInfo.timeFactor.toDouble()
         val actualDose = (params.rate * concentration) / (params.weight * timeFactor)
 
-        return ReverseInfusionResult(
-            dose = "%.4f".format(actualDose),
-            raw = actualDose,
-            unit = doseInfo.baseUnit,
-            rate = params.rate,
-            concentration = concentration
-        )
+        return ReverseInfusionResult(dose = "%.4f".format(actualDose), raw = actualDose, unit = doseInfo.baseUnit, rate = params.rate, concentration = concentration)
     }
 }
