@@ -1,33 +1,25 @@
 package com.a7mad.picupro.security
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import android.content.SharedPreferences
 import java.security.MessageDigest
 
 object ActivationManager {
 
+    private const val PREFS_NAME = "picu_activation"
+    private const val KEY_ACTIVATED = "is_activated"
     private const val SECRET_SALT = "PICU2026AhmedQudah"
 
-    private val Context.dataStore by preferencesDataStore(name = "picu_activation")
-
-    private object Keys {
-        val IS_ACTIVATED = booleanPreferencesKey("is_activated")
+    private fun prefs(context: Context): SharedPreferences {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    fun isActivated(context: Context): Flow<Boolean> {
-        return context.dataStore.data.map { preferences ->
-            preferences[Keys.IS_ACTIVATED] ?: false
-        }
+    fun isActivated(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_ACTIVATED, false)
     }
 
-    suspend fun setActivated(context: Context, activated: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[Keys.IS_ACTIVATED] = activated
-        }
+    fun setActivated(context: Context, activated: Boolean) {
+        prefs(context).edit().putBoolean(KEY_ACTIVATED, activated).apply()
     }
 
     fun getDeviceId(context: Context): String {

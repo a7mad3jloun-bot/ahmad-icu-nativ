@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.a7mad.picupro.security.ActivationManager
-import kotlinx.coroutines.launch
 
 private val DarkBg = Color(0xFF111827)
 private val TealPrimary = Color(0xFF0D9488)
@@ -33,7 +32,6 @@ private val CardBg = Color(0xFF1F2937)
 @Composable
 fun ActivationScreen(onActivationSuccess: () -> Unit) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     val deviceId = remember { ActivationManager.getDeviceId(context) }
     var enteredCode by remember { mutableStateOf("") }
@@ -128,10 +126,8 @@ fun ActivationScreen(onActivationSuccess: () -> Unit) {
             onClick = {
                 val result = ActivationManager.validateCode(deviceId, enteredCode)
                 if (result is ActivationManager.ValidationResult.Valid) {
-                    coroutineScope.launch {
-                        ActivationManager.setActivated(context, true)
-                        onActivationSuccess()
-                    }
+                    ActivationManager.setActivated(context, true)
+                    onActivationSuccess()
                 } else {
                     errorMessage = "Invalid Activation Code!"
                 }
