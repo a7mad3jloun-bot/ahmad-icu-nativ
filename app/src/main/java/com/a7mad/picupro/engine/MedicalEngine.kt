@@ -42,11 +42,11 @@ object MedicalEngine {
     }
 
     data class CalculationResult(
-        val rawResult: Double? = null,
-        val roundedResult: Double? = null,
-        val calculatedDose: Double? = null,
-        val warnings: List<String> = emptyList(),
-        val error: String? = null,
+        var rawResult: Double? = null,
+        var roundedResult: Double? = null,
+        var calculatedDose: Double? = null,
+        var warnings: List<String> = emptyList(),
+        var error: String? = null,
         var displayMode: String = ""
     )
 
