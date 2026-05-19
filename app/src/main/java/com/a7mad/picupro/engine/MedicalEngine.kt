@@ -14,9 +14,9 @@ object MedicalEngine {
     // ---------------------------------------------------------------
 
     data class ParsedUnit(
-        val baseUnit: String,   // mcg, mg, units, milliunits
+        val baseUnit: String,
         val hasKg: Boolean,
-        val timeFactor: Int     // 60 إذا كانت /min، و 1 إذا كانت /hr
+        val timeFactor: Int
     )
 
     fun parseUnitString(unitString: String?): ParsedUnit {
@@ -46,7 +46,7 @@ object MedicalEngine {
 
     data class Concentration(
         val value: Double,
-        val unit: String   // مثل "mg/mL"
+        val unit: String
     )
 
     fun calculateConcentration(
@@ -68,13 +68,13 @@ object MedicalEngine {
     // 3. كائن النتيجة
     // ---------------------------------------------------------------
 
-   data class CalculationResult(
-        var rawResult: Double? = null,
-        var roundedResult: Double? = null,
-        var calculatedDose: Double? = null,
-        var warnings: List<String> = emptyList(),
-        var error: String? = null,
-        var displayMode: String = ""
+    data class CalculationResult(
+        val rawResult: Double? = null,
+        val roundedResult: Double? = null,
+        val calculatedDose: Double? = null,
+        val warnings: List<String> = emptyList(),
+        val error: String? = null,
+        val displayMode: String = ""
     )
 
     // ---------------------------------------------------------------
@@ -102,7 +102,6 @@ object MedicalEngine {
             val doseInfo = parseUnitString(params.unit)
             val drugInfo = parseUnitString(params.totalDrugUnit)
 
-            // معامل تحويل الوحدات
             var unitConv = 1.0
             when {
                 doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg"       -> unitConv = 0.001
@@ -166,6 +165,17 @@ object MedicalEngine {
         val minDose: Double?
     )
 
+    data class ReverseBolusByVolumeParams(
+        val givenVolume: Double,
+        val weight: Double,
+        val unit: String?,
+        val totalDrugAmount: Double,
+        val totalVolume: Double,
+        val totalDrugUnit: String?,
+        val maxDose: Double?,
+        val minDose: Double?
+    )
+
     data class ReverseBolusResult(
         val volume: String? = null,
         val raw: Double? = null,
@@ -191,7 +201,6 @@ object MedicalEngine {
         val weightFactor = if (doseInfo.hasKg) params.weight else 1.0
         val effectiveDose = params.dose * weightFactor
 
-        // تحويل الوحدات
         var concentration = amt / vol
         when {
             doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg"  -> concentration *= 1000.0
@@ -203,7 +212,6 @@ object MedicalEngine {
         var error: String? = null
         var warning: String? = null
 
-        // فحص الحد الأعلى
         params.maxDose?.let { max ->
             val patientMax = max * weightFactor
             if (effectiveDose > patientMax) {
@@ -213,7 +221,6 @@ object MedicalEngine {
             }
         }
 
-        // فحص الحد الأدنى
         params.minDose?.let { min ->
             val patientMin = min * weightFactor
             if (effectiveDose < patientMin) {
@@ -226,6 +233,64 @@ object MedicalEngine {
         return ReverseBolusResult(
             volume = "%.2f".format(volumeToDraw),
             raw = volumeToDraw,
+            doseGiven = "%.3f".format(effectiveDose),
+            unit = doseInfo.baseUnit,
+            error = error,
+            warning = warning
+        )
+    }
+
+    /**
+     * الحساب العكسي للجرعات المتقطعة (Bolus) عن طريق الحجم المعطى.
+     * الممرض يدخل الحجم المعطى (mL) فنستخرج الجرعة الفعلية التي تلقاها المريض.
+     */
+    fun reverseBolusByVolume(params: ReverseBolusByVolumeParams): ReverseBolusResult {
+        val vol = params.totalVolume
+        val amt = params.totalDrugAmount
+
+        if (vol <= 0.0 || amt <= 0.0) {
+            return ReverseBolusResult(error = "Missing Drug Amount or Volume")
+        }
+        if (params.givenVolume.isNaN() || params.weight.isNaN() || vol <= 0.0) {
+            return ReverseBolusResult(error = "Invalid inputs")
+        }
+
+        val doseInfo = parseUnitString(params.unit)
+        val drugInfo = parseUnitString(params.totalDrugUnit)
+        val weightFactor = if (doseInfo.hasKg) params.weight else 1.0
+
+        var concentration = amt / vol
+        when {
+            doseInfo.baseUnit == "mcg" && drugInfo.baseUnit == "mg"  -> concentration *= 1000.0
+            doseInfo.baseUnit == "mg"  && drugInfo.baseUnit == "mcg" -> concentration /= 1000.0
+        }
+
+        val effectiveDose = params.givenVolume * concentration
+
+        var error: String? = null
+        var warning: String? = null
+
+        params.maxDose?.let { max ->
+            val patientMax = max * weightFactor
+            if (effectiveDose > patientMax) {
+                error = "DANGER: Max Dose Exceeded! " +
+                    "(Calc: ${"%.3f".format(effectiveDose)}, " +
+                    "Pt Max: ${"%.3f".format(patientMax)} ${doseInfo.baseUnit})"
+            }
+        }
+
+        params.minDose?.let { min ->
+            val patientMin = min * weightFactor
+            if (effectiveDose < patientMin) {
+                warning = "Low Dose Alert! " +
+                    "(Calc: ${"%.3f".format(effectiveDose)}, " +
+                    "Pt Min: ${"%.3f".format(patientMin)} ${doseInfo.baseUnit}) - Renal/Hepatic Adjustment?"
+            }
+        }
+
+        return ReverseBolusResult(
+            volume = "%.2f".format(params.givenVolume),
+            raw = effectiveDose,
             doseGiven = "%.3f".format(effectiveDose),
             unit = doseInfo.baseUnit,
             error = error,
